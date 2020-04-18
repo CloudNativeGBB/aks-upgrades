@@ -1,19 +1,22 @@
 #! /bin/bash
 
+# Expected variables to be exported by callign script(s):
+# $UPDATE_TO_KUBERNETES_VERSION
+
+CLUSTER_FILE_NAME="clusterUpgradeCandidates.json"
+
 ### Cluster functions
 function createClusterUpgradeCandidatesJSON(){
-    local __fileName="clusterUpgradeCandidates.tsv"
-
     echo "Generating list of AKS CLusters to upgrade..."
 
-    local $__tsv=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion}}" -o tsv)
+    local $__json=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion}}" -o json)
 
     if [ $? -eq 0 ]
     then
         echo "Succeeded to create list of cluster upgrade candidates"
-        echo $$__tsv | tee .tmp/$__fileName
+        echo $$__json | tee .tmp/$$CLUSTER_FILE_NAME
     else
-        echo "Failed to create list of cluster upgrade candidates" >err.log 
+        echo "Failed to create list of cluster upgrade candidates" > err.log 
         return 1
     fi
 }
@@ -35,9 +38,13 @@ function checkClusterExists() {
 }
 
 function checkClusterControlPlanes() {
-    local __fileName="clusterUpgradeCandidates.json"
+    local __targetK8sVersion=$UPDATE_TO_KUBERNETES_VERSION
+    local __clusterNames=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r '.[] | .name')
 
-    checkClusterControlPlane
+    for __clusterName in __clusterNames
+    do
+        checkClusterControlPlane $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion
+    done
 }
 
 function checkClusterControlPlane() {
