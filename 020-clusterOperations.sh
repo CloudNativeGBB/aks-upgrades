@@ -34,20 +34,22 @@ function checkClusterExists() {
     fi
 }
 
-function checkControlPlanes() {
+function checkClusterControlPlanes() {
     local __fileName="clusterUpgradeCandidates.json"
+
+    checkClusterControlPlane
 }
 
-function checkControlPlane() {
+function checkClusterControlPlane() {
     local __RG=$1
     local __clusterName=$2
     local __clusterK8sVersion=$3
     local __targetK8sVersion=$4
 
-    controlPlaneNeedsUpgrade $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion
+    clusterControlPlaneNeedsUpgrade $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion
 }
 
-function controlPlaneNeedsUpgrade() {
+function clusterControlPlaneNeedsUpgrade() {
     local __RG=$1
     local __clusterName=$2
     local __clusterK8sVersion=$3
@@ -59,7 +61,7 @@ function controlPlaneNeedsUpgrade() {
         echo "Control Plane version equal to: $__clusterK8sVersion"
         echo "Target K8s $__targetK8sVersion"
         
-        upgradeControlPlane $__RG $__clusterName $__targetK8sVersion
+        upgradeClusterControlPlane $__RG $__clusterName $__targetK8sVersion
         
         if [ $? -eq 0]
         then
@@ -77,7 +79,7 @@ function controlPlaneNeedsUpgrade() {
     fi
 }
 
-function upgradeControlPlane() {
+function upgradeClusterControlPlane() {
     local __RG=$1
     local __clusterName=$2
     local __K8SVersion=$3
