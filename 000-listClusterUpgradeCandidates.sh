@@ -184,10 +184,17 @@ function drainNodePool() {
 }
 
 function deleteNodePool() {
+    local __RG=$1
+    local __clusterName=$2
+    local __nodePoolName=$3
+
     # Delete current NodePool
     echo "Deleting current NodePool"
-    az aks nodepool delete -g $RG --cluster-name $NAME -n $CURRENT_NODEPOOL
-    echo "done - Deleting current NodePool"
+    
+    az aks nodepool delete \
+        -g $RG \
+        --cluster-name $__clusterName \
+        -n $__nodePoolName
 
-    echo "NodePool Upgrade Successful"
+    echo "Success: Deleted Node Pool: $__nodePoolName"
 }
