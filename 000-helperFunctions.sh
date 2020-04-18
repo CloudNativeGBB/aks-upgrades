@@ -20,3 +20,9 @@ function helperCheckScriptRequirements(){
 function helperCheckSemVer() {
     echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4) }'
 }
+
+# Function clear previous files
+function helperClearTempFiles() {
+    rm -rf .tmp
+    mkdir -p .tmp
+}

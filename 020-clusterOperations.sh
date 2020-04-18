@@ -9,7 +9,7 @@ function createClusterUpgradeCandidatesJSON(){
     if [ $? -eq 0 ]
     then
         echo "Succeeded to create list of cluster upgrade candidates"
-        echo $__list | tee clusterUpgradeCandidates.json
+        echo $__list | tee .tmp/clusterUpgradeCandidates.json
     else
         echo "Failed to create list of cluster upgrade candidates" >err.log 
         return 1
@@ -32,18 +32,41 @@ function checkClusterExists() {
     fi
 }
 
+function checkControlPlane() {
+    local __RG=$1
+    local __clusterName=$2
+    local __clusterK8sVersion=$3
+    local __targetK8sVersion=$4
+
+    controlPlaneNeedsUpgrade $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion
+}
+
 function controlPlaneNeedsUpgrade() {
-    local __clusterK8sVersion=$1
-    local __targetK8sVersion=$2
+    local __RG=$1
+    local __clusterName=$2
+    local __clusterK8sVersion=$3
+    local __targetK8sVersion=$4
 
     if [ $(helperCheckSemVer $__clusterK8sVersion) -lt $(helperCheckSemVer $__targetK8sVersion) ]
     then
-        echo "Upgrade needed."
-        echo "Cluster K8s ver $__clusterK8sVersion"
+        echo "Control Plane Upgrade needed."
+        echo "Control Plane version equal to: $__clusterK8sVersion"
         echo "Target K8s $__targetK8sVersion"
-        return 0
+        
+        upgradeControlPlane $__RG $__clusterName $__targetK8sVersion
+        
+        if [ $? -eq 0]
+        then
+            return 0
+        else
+            echo "Cluster Upgrade Failed." > err.log
+            return 1
+        fi
     else 
-        echo "Upgrade not needed. Control Plane up to date $__clusterK8sVersion."
+        echo "Control Plane Upgrade not needed."
+        echo "Control Plane version equal to: $__clusterK8sVersion."
+        echo "Target K8s $__targetK8sVersion"
+
         return 1
     fi
 }
@@ -63,6 +86,6 @@ function upgradeControlPlane() {
         --control-plane-only \
         -y
         
+    echo "Upgrade Complete now at version $__K8SVersion"
     echo "Finished at: $(date)"
-    echo "done"
 }

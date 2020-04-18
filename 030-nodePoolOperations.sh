@@ -9,7 +9,7 @@ function createNodePoolUpgradeCandidatesJSON(){
     if [ $? -eq 0 ]
     then
         echo "Succeeded to create list of Node Pool upgrade candidates"
-        echo $__list | tee nodePoolUpgradeCandidates.json
+        echo $__list | tee .tmp/nodePoolUpgradeCandidates.json
     else
         echo "Failed to create list of Node Pool upgrade candidates" >err.log 
         return 1
