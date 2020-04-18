@@ -147,39 +147,37 @@ function createNewNodePool() {
 }
 
 function listNodesInNodePool() {
-    local __poolName=$1
+    local __nodePoolName=$1
 
     # Find current NodePool nodes and create file
-    echo $(kubectl get nodes | grep -i $__poolName | awk '{print $1}') | tee listNodesinNodePool-$__poolName.txt
+    echo $(kubectl get nodes | grep -i $__nodePoolName | awk '{print $1}') | tee listNodesinNodePool-$__nodePoolName.txt
     return 0
 }
 
-# Taint Nodepool so nothing gets scheduled onto it
-function taintNodePool() {
-    local __nodePoolName=$1
-    
-    echo "Tainting NodePool $__nodePoolName"
-
+# Taint Node Pool
+function tainitNodePool() {
     while NODES= read -r NODE
     do
-        echo "*****Tainting ${NODE}"
-        kubectl taint node $NODE GettingUpgraded=:NoSchedule
-        echo "*****done - Tainting"
+        taintNode $__nodeName
     done < nodes.txt
 
     echo "done - Tainting current NodePool"
 }
 
+function drainNodePools() {
+
+}
+
 function drainNodePool() {
-    # Drain workloads from current NodePool
+    local __nodePoolName=$1
+
     echo "Draining current NodePool"
+
     while NODES= read -r NODE
     do
-        echo "*****Draining ${NODE}"
-        kubectl drain $NODE --ignore-daemonsets --delete-local-data
-        sleep 60
-        echo "*****done - Draining"
+      drainNode $__nodeName  
     done < nodes.txt
+    
     echo "done - Draining current NodePool"
 }
 
@@ -203,4 +201,33 @@ function deleteNodePool() {
     else
         echo "Failure: Unable to delete Node Pool: $__nodePoolName" > err.log
     fi
+}
+
+## Node Level Operations
+# Taint Node so nothing gets scheduled onto it
+function taintNode() {
+    local __nodeName=$1
+    
+    echo "Tainting Node $__nodeName"
+
+    
+    echo "*****Tainting $__nodeName"
+    kubectl taint node $__nodeName GettingUpgraded=:NoSchedule
+    echo "*****done - Tainting"
+    
+}
+
+function drainNode() {
+    local __nodeName=$1
+
+    # Drain workloads from node $__nodeName
+    echo "*****Draining $__nodeName"
+    
+    kubectl drain $__nodeName \
+        --ignore-daemonsets \
+        --delete-local-data
+
+    sleep 60
+    
+    echo "*****done - Draining"
 }
