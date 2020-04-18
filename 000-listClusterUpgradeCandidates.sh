@@ -196,5 +196,11 @@ function deleteNodePool() {
         --cluster-name $__clusterName \
         -n $__nodePoolName
 
-    echo "Success: Deleted Node Pool: $__nodePoolName"
+    if [ $? -eq 0 ]
+    then
+        echo "Success: Deleted Node Pool: $__nodePoolName"
+        return 0
+    else
+        echo "Failure: Unable to delete Node Pool: $__nodePoolName" > err.log
+    fi
 }
