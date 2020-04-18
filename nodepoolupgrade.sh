@@ -47,7 +47,9 @@ then
     echo "Cluster Found"
 
     cluster_version=$(az aks show -g $RG -n $NAME -o tsv --query 'kubernetesVersion')
+    
     echo "Cluster Version: $cluster_version"
+    
     if [ $(version $cluster_version) -lt $(version $KUBERNETES_VERSION) ]
     then
         echo "Control Plane needs Updating"
