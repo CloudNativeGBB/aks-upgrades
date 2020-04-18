@@ -29,4 +29,4 @@ setSubscription $AZURE_SUBSCRIPTION_ID
 createClusterUpgradeCandidatesJSON
 
 # Check if Control Plane Needs Upgrade First
-checkControlPlane
+checkControlPlanes

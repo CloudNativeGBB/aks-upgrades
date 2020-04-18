@@ -2,14 +2,16 @@
 
 ### Node Pool functions
 function createNodePoolUpgradeCandidatesJSON(){
+    local __fileName="nodePoolUpgradeCandidates.tsv"
+
     echo "Generating list of AKS Node Pools to upgrade..."
 
-    local __list=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, orchestratorVersion: orchestratorVersion}}" -o json)
+    local $__tsv=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion}}" -o tsv)
 
     if [ $? -eq 0 ]
     then
         echo "Succeeded to create list of Node Pool upgrade candidates"
-        echo $__list | tee .tmp/nodePoolUpgradeCandidates.json
+        echo $__tsv | tee .tmp/$__fileName
     else
         echo "Failed to create list of Node Pool upgrade candidates" >err.log 
         return 1

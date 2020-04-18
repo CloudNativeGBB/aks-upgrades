@@ -2,14 +2,16 @@
 
 ### Cluster functions
 function createClusterUpgradeCandidatesJSON(){
+    local __fileName="clusterUpgradeCandidates.tsv"
+
     echo "Generating list of AKS CLusters to upgrade..."
 
-    local __list=$(az aks list --query "[?kubernetesVersion < '$UPDATE_TO_KUBERNETES_VERSION'].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, orchestratorVersion: orchestratorVersion}}" -o json)
+    local $__tsv=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion}}" -o tsv)
 
     if [ $? -eq 0 ]
     then
         echo "Succeeded to create list of cluster upgrade candidates"
-        echo $__list | tee .tmp/clusterUpgradeCandidates.json
+        echo $$__tsv | tee .tmp/$__fileName
     else
         echo "Failed to create list of cluster upgrade candidates" >err.log 
         return 1
@@ -30,6 +32,10 @@ function checkClusterExists() {
         echo "Cluster Not Found"
         return 1
     fi
+}
+
+function checkControlPlanes() {
+    local __fileName="clusterUpgradeCandidates.json"
 }
 
 function checkControlPlane() {
@@ -59,7 +65,7 @@ function controlPlaneNeedsUpgrade() {
         then
             return 0
         else
-            echo "Cluster Upgrade Failed." > err.log
+            echo "Control Plane Upgrade Failed." > err.log
             return 1
         fi
     else 
@@ -85,7 +91,14 @@ function upgradeControlPlane() {
         -k $__K8SVersion \
         --control-plane-only \
         -y
-        
-    echo "Upgrade Complete now at version $__K8SVersion"
-    echo "Finished at: $(date)"
+    if [$? -eq 0]
+    then
+        echo "Succeeded: Control Plane Upgrade Complete now at version $__K8SVersion"
+        echo "Finished at: $(date)"
+        return 0
+    else 
+        echo "Failed: Control Plane Upgrade to version $__K8SVersion"
+        return 1
+    fi
+    
 }
