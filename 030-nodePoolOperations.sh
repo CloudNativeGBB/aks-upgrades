@@ -6,14 +6,15 @@ function createNodePoolUpgradeCandidatesJSON(){
 
     echo "Generating list of AKS Node Pools to upgrade..."
 
-    local $__json=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion}}" -o json)
+    local $__json=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
+
 
     if [ $? -eq 0 ]
     then
         echo "Succeeded to create list of Node Pool upgrade candidates"
         echo $__json | tee .tmp/$__fileName
     else
-        echo "Failed to create list of Node Pool upgrade candidates" >err.log 
+        echo "Failed to create list of Node Pool upgrade candidates" > err.log 
         return 1
     fi
 }

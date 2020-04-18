@@ -9,7 +9,7 @@ CLUSTER_FILE_NAME="clusterUpgradeCandidates.json"
 function createClusterUpgradeCandidatesJSON(){
     echo "Generating list of AKS CLusters to upgrade..."
 
-    local $__json=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion}}" -o json)
+    local $__json=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
 
     if [ $? -eq 0 ]
     then
