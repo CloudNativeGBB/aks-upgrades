@@ -14,12 +14,13 @@ function upgradeNodePool() {
 
     checkNodePoolNameisValid $__RG $__clusterName $__newNodePoolName
     createNewNodePool $__RG $__clusterName $__newNodePoolName $__nodePoolCount $__nodePoolVMSize
+    taintNodePool $__oldNodePoolName
 }
 
 function createListOfNodesInNodePool() {
     local __nodePoolName=$1
 
-    kubectl get nodes | grep -i $__nodePoolName | awk '{print $1}' > .tmp/$__nodePoolName.txt
+    kubectl get nodes | grep -i $__nodePoolName | awk '{print $1}' > .tmp/nodepool-$__nodePoolName.txt
     return 0
 }
 
@@ -72,10 +73,10 @@ function createNewNodePool() {
 }
 
 # Taint Node Pool
-function tainitNodePool() {
+function taintNodePool() {
     local __nodePoolName=$1
-    local __nodesListFile="./tmp/$__nodePoolName.txt"
-    local __taintListFile=="./tmp/$__nodePoolName-taint.txt"
+    local __nodesListFile=".tmp/nodepool-"$__nodePoolName".txt"
+    local __taintListFile=".tmp/nodepool-"$__nodePoolName"-taint.txt"
 
     # duplicate Node List to Taint List to track progress
     cp $__nodesListFile $__taintListFile
@@ -87,17 +88,39 @@ function tainitNodePool() {
         kubectl taint node $__nodeName GettingUpgraded=:NoSchedule
         
         # remove node name from list to track progress
-        sed -e s/$__nodeName//g -i .$__taintListFile
+        sed -e s/$__nodeName//g -i $__taintListFile
     done
 
     echo "done - Tainting current Node Pool '$__nodePoolName'"
-    rm $__taintListFile
+    mv $__taintListFile "$__taintListFile".done
+}
+
+function untaintNodePool() {
+    local __nodePoolName=$1
+    local __nodesListFile=".tmp/nodepool-"$__nodePoolName".txt"
+    local __untaintListFile=".tmp/nodepool-"$__nodePoolName"-untaint.txt"
+
+    # duplicate Node List to Taint List to track progress
+    cp $__nodesListFile $__untaintListFile
+
+    for __nodeName in $(cat $__untaintListFile)
+    do
+        echo "Untainting Node '$__nodeName' in Node Pool '$__nodePoolName'"
+        
+        kubectl taint node $__nodeName GettingUpgraded=:NoSchedule-
+        
+        # remove node name from list to track progress
+        sed -e s/$__nodeName//g -i $__untaintListFile
+    done
+
+    echo "done - Untainting current Node Pool '$__nodePoolName'"
+    mv $__untaintListFile "$__untaintListFile".done
 }
 
 function drainNodePool() {
     local __nodePoolName=$1
-    local __nodesListFile="./tmp/$__nodePoolName.txt"
-    local __drainListFile=="./tmp/$__nodePoolName-drain.txt"
+    local __nodesListFile=".tmp/nodepool-$__nodePoolName.txt"
+    local __drainListFile=".tmp/nodepool-$__nodePoolName-drain.txt"
     
     # duplicate Node List to Taint List to track progress
     cp $__nodesListFile $__drainListFile
@@ -114,7 +137,7 @@ function drainNodePool() {
     done
 
     echo "done - Draining current Node Pool '$__nodePoolName'"
-    rm $__drainListFile
+    mv $__drainListFile "$__drainListFile".done
 }
 
 function deleteNodePool() {
