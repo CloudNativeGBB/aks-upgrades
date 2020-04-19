@@ -40,11 +40,12 @@ function checkClusterExists() {
 }
 
 function checkClusterControlPlanes() {
-    local __targetK8sVersion=$UPDATE_TO_KUBERNETES_VERSION
-    local __clusterNames=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r '.[] | .name')
-
-    for __clusterName in __clusterNames
+    for __clusterName in $(cat .tmp/$CLUSTER_FILE_NAME | jq -r '.[] | .name')    
     do
+        local __RG=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
+        local __clusterK8sVersion=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).kubernetesVersion')
+        local __targetK8sVersion=$UPDATE_TO_KUBERNETES_VERSION
+        
         checkClusterControlPlane $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion
     done
 }
@@ -55,10 +56,10 @@ function checkClusterControlPlane() {
     local __clusterK8sVersion=$3
     local __targetK8sVersion=$4
 
-    clusterControlPlaneNeedsUpgrade $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion
+    checkClusterControlPlaneNeedsUpgrade $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion
 }
 
-function clusterControlPlaneNeedsUpgrade() {
+function checkClusterControlPlaneNeedsUpgrade() {
     local __RG=$1
     local __clusterName=$2
     local __clusterK8sVersion=$3
@@ -72,11 +73,11 @@ function clusterControlPlaneNeedsUpgrade() {
         
         upgradeClusterControlPlane $__RG $__clusterName $__targetK8sVersion
         
-        if [ $? -eq 0]
+        if [ $? -eq 0 ]
         then
             return 0
         else
-            echo "Control Plane Upgrade Failed." > err.log
+            echo "Control Plane Upgrade Failed." > .tmp/err.log
             return 1
         fi
     else 
@@ -102,7 +103,8 @@ function upgradeClusterControlPlane() {
         -k $__K8SVersion \
         --control-plane-only \
         -y
-    if [$? -eq 0]
+
+    if [ $? -eq 0 ]
     then
         echo "Succeeded: Control Plane Upgrade Complete now at version $__K8SVersion"
         echo "Finished at: $(date)"

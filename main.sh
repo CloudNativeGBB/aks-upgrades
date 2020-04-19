@@ -1,7 +1,5 @@
 #! /bin/bash
 
-set -e
-
 ## Required Bootstrap VARIABLES
 export AZURE_SUBSCRIPTION_ID=
 export UPDATE_TO_KUBERNETES_VERSION="1.15.19"
@@ -15,7 +13,7 @@ source ./000-helperFunctions.sh
 ## Load Azure CLI pre-flight Operation functions
 source ./010-azCLIOperations.sh
 ## Load Cluster Level Operation functions
-source ./020-clusterOperations
+source ./020-clusterOperations.sh
 
 function main() {
     # Check prerequisites
