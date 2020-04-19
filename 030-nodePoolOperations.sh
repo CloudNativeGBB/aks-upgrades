@@ -6,7 +6,7 @@ function createNodePoolUpgradeCandidatesJSON(){
 
     echo "Generating list of AKS Node Pools to upgrade..."
 
-        local $__json=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
+        local $__json=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
 
 
     if [ $? -eq 0 ]
@@ -30,18 +30,29 @@ function upgradeNodePools() {
     done
 }
 
+function upgradeNodePool() {
+    local __RG=$1
+    local __clusterName=$2
+    local __oldNodePoolName=$3
+    local __newNodePoolName=$3-$UPDATE_TO_KUBERNETES_VERSION
+
+    checkNodePoolNameExists $__RG $__clusterName $__oldNodePoolName
+}
+
 function checkNodePoolNameExists() {
     local __RG=$1
     local __clusterName=$2
     local __nodePoolName=$3
-    local __json=$(az aks nodepool show -g default-demo-corp-privaks001 --cluster-name default-demo-corp-privaks001 -n raypool -o json)
+    # Commented out Reason: az aks nodepool will check length of nodePoolName
+    # local __nodePoolNameLength=$(expr length $__nodePoolName)
+    local __json=$(az aks nodepool show -g $__RG --cluster-name $__clusterName -n $nodePoolName -o json)
 
     if [ $? -eq 0 ]
     then
         echo "Node Pool name already Exists"
         return 0
     else 
-        echo "Node Pool nam does not Exist"
+        echo "Node Pool name does not Exist"
         return 1
     fi
 }
