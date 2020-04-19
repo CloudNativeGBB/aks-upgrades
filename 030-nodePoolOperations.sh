@@ -1,7 +1,7 @@
 #! /bin/bash
 
 ## Load node Level Operation functions
-source ./040-nodeOperations
+source "./040-nodeOperations.sh"
 
 ### Node Pool functions
 function createNodePoolUpgradeCandidatesJSON(){
@@ -22,29 +22,7 @@ function createNodePoolUpgradeCandidatesJSON(){
     fi
 }
 
-function upgradeNodePools() {
-    local __RG=$1
-    local __clusterName=$2
-    local __oldNodePoolNames=$3
-    
-    for __oldNodePoolName in __nodePoolNames
-    do
-        upgradeNodePool $__RG $__clusterName $__oldNodePoolName
-    done
-}
-
-function upgradeNodePool() {
-    local __RG=$1
-    local __clusterName=$2
-    local __oldNodePoolName=$3
-    local __newNodePoolName=$3-$UPDATE_TO_KUBERNETES_VERSION
-
-    checkNodePoolNameExists $__RG $__clusterName $__oldNodePoolName
-
-    ## Continue Here
-}
-
-function checkNodePoolNameExists() {
+function checkNodePoolNameisValid() {
     local __RG=$1
     local __clusterName=$2
     local __nodePoolName=$3
@@ -99,10 +77,6 @@ function tainitNodePool() {
     echo "done - Tainting current NodePool"
 }
 
-function drainNodePools() {
-
-}
-
 function drainNodePool() {
     local __nodePoolName=$1
 
@@ -136,4 +110,30 @@ function deleteNodePool() {
     else
         echo "Failure: Unable to delete Node Pool: $__nodePoolName" > err.log
     fi
+}
+
+function upgradeNodePools() {
+    local __RG=$1
+    local __clusterName=$2
+    local __oldNodePoolNames=$3
+    
+    for __oldNodePoolName in __nodePoolNames
+    do
+        local __nodePoolCount=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r '.[] | select(.name=="default-demo-corp-pubaks").agentPoolProfiles[] | select(.name=="default").count')
+        local __nodePoolVMSize=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r '.[] | select(.name=="default-demo-corp-pubaks").agentPoolProfiles[] | select(.name=="default").vmSize')
+        
+        upgradeNodePool $__RG $__clusterName $__oldNodePoolName $__nodePoolCount $__nodePoolVMSize
+    done
+}
+
+function upgradeNodePool() {
+    local __RG=$1
+    local __clusterName=$2
+    local __oldNodePoolName=$3
+    local __newNodePoolName=$__oldNodePoolName$UPDATE_TO_KUBERNETES_VERSION_SAFE_STRING
+    local __nodePoolCount=$4
+    local __nodePoolVMSize=$5
+
+    checkNodePoolNameisValid $__RG $__clusterName $__oldNodePoolName
+    createNewNodePool $__RG $__clusterName $__newNodePoolName $__nodePoolCount $__nodePoolVMSize
 }

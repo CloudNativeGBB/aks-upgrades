@@ -5,18 +5,18 @@
 # $CLUSTER_FILE_NAME
 
 ## Load nodePool Level Operation functions
-source ./030-nodePoolOperations
+source "./030-nodePoolOperations.sh"
 
 ### Cluster functions
 function createClusterUpgradeCandidatesJSON(){
     echo "Generating list of AKS CLusters to upgrade..."
 
-    local $__json=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
+    local __json=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
 
     if [ $? -eq 0 ]
     then
         echo "Succeeded to create list of cluster upgrade candidates"
-        echo $$__json | tee .tmp/$$CLUSTER_FILE_NAME
+        echo $__json | tee .tmp/$CLUSTER_FILE_NAME
     else
         echo "Failed to create list of cluster upgrade candidates" > err.log 
         return 1
