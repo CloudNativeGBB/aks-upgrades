@@ -6,7 +6,7 @@ function createNodePoolUpgradeCandidatesJSON(){
 
     echo "Generating list of AKS Node Pools to upgrade..."
 
-    local $__json=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
+        local $__json=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
 
 
     if [ $? -eq 0 ]
@@ -19,14 +19,37 @@ function createNodePoolUpgradeCandidatesJSON(){
     fi
 }
 
-function checkNodePoolExists() {
+function upgradeNodePools() {
+    local __RG=$1
+    local __clusterName=$2
+    local __oldNodePoolNames=$3
+    
+    for __oldNodePoolName in __nodePoolNames
+    do
+        upgradeNodePool $__RG $__clusterName $__oldNodePoolName
+    done
+}
 
+function checkNodePoolNameExists() {
+    local __RG=$1
+    local __clusterName=$2
+    local __nodePoolName=$3
+    local __json=$(az aks nodepool show -g default-demo-corp-privaks001 --cluster-name default-demo-corp-privaks001 -n raypool -o json)
+
+    if [ $? -eq 0 ]
+    then
+        echo "Node Pool name already Exists"
+        return 0
+    else 
+        echo "Node Pool nam does not Exist"
+        return 1
+    fi
 }
 
 function createNewNodePool() {
     local __RG=$1
     local __clusterName=$2
-    local __nodePoolName=$3
+    local __newNodePoolName=$3
     local __nodePoolCount=$4
     local __nodePoolVMSize=$5
 
@@ -35,7 +58,7 @@ function createNewNodePool() {
     
     az aks nodepool add \
         -g $__RG --cluster-name $__clusterName \
-        -n $__nodePoolName \
+        -n $__newNodePoolName \
         -c $__nodePoolCount \
         -s $__nodePoolVMSize
 

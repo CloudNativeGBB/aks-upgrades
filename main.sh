@@ -30,3 +30,6 @@ createClusterUpgradeCandidatesJSON
 
 # Check if Control Plane Needs Upgrade First
 checkClusterControlPlanes
+
+# Upgrade Elgible Cluster NodePools
+upgradeClusterNodePools
