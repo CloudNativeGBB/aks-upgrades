@@ -1,9 +1,11 @@
 #! /bin/bash
 
-# Expected variables to be exported by callign script(s):
+# Expected variables to be exported by calling script(s):
 # $UPDATE_TO_KUBERNETES_VERSION
+# $CLUSTER_FILE_NAME
 
-CLUSTER_FILE_NAME="clusterUpgradeCandidates.json"
+## Load nodePool Level Operation functions
+source ./030-nodePoolOperations
 
 ### Cluster functions
 function createClusterUpgradeCandidatesJSON(){

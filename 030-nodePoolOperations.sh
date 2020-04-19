@@ -1,5 +1,8 @@
 #! /bin/bash
 
+## Load node Level Operation functions
+source ./040-nodeOperations
+
 ### Node Pool functions
 function createNodePoolUpgradeCandidatesJSON(){
     local __fileName="nodePoolUpgradeCandidates.json"
