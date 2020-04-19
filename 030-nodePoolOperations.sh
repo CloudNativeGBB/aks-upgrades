@@ -3,29 +3,16 @@
 ## Load node Level Operation functions
 source "./040-nodeOperations.sh"
 
-function upgradeNodePools() {
-    local __RG=$1
-    local __clusterName=$2
-    local __oldNodePoolNames=$3
-    
-    for __oldNodePoolName in __nodePoolNames
-    do
-        local __nodePoolCount=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r '.[] | select(.name=="default-demo-corp-pubaks").agentPoolProfiles[] | select(.name=="default").count')
-        local __nodePoolVMSize=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r '.[] | select(.name=="default-demo-corp-pubaks").agentPoolProfiles[] | select(.name=="default").vmSize')
-        
-        upgradeNodePool $__RG $__clusterName $__oldNodePoolName $__nodePoolCount $__nodePoolVMSize
-    done
-}
-
 function upgradeNodePool() {
     local __RG=$1
     local __clusterName=$2
     local __oldNodePoolName=$3
-    local __newNodePoolName=$__oldNodePoolName$UPDATE_TO_KUBERNETES_VERSION_SAFE_STRING
-    local __nodePoolCount=$4
-    local __nodePoolVMSize=$5
+    local __suffix="v${UPDATE_TO_KUBERNETES_VERSION//./}"  
+    local __newNodePoolName=$__oldNodePoolName$__suffix
+    local __nodePoolCount=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r --arg clusterName "$__clusterName" --arg nodePoolName "$__oldNodePoolName" '.[] | select(.name==$clusterName).agentPoolProfiles[] | select(.name==$nodePoolName).count')
+    local __nodePoolVMSize=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r --arg clusterName "$__clusterName" --arg nodePoolName "$__oldNodePoolName" '.[] | select(.name==$clusterName).agentPoolProfiles[] | select(.name==$nodePoolName).vmSize')
 
-    checkNodePoolNameisValid $__RG $__clusterName $__oldNodePoolName
+    checkNodePoolNameisValid $__RG $__clusterName $__newNodePoolName
     createNewNodePool $__RG $__clusterName $__newNodePoolName $__nodePoolCount $__nodePoolVMSize
 }
 
@@ -36,21 +23,32 @@ function createListOfNodesInNodePool() {
     return 0
 }
 
-function checkNodePoolNameisValid() {
+function checkNodePoolNameIsValid() {
     local __RG=$1
     local __clusterName=$2
     local __nodePoolName=$3
     # Commented out Reason: az aks nodepool will check length of nodePoolName
     # local __nodePoolNameLength=$(expr length $__nodePoolName)
-    local __json=$(az aks nodepool show -g $__RG --cluster-name $__clusterName -n $nodePoolName -o json)
+    local __nameLength=$(expr length $__nodePoolName)
+    
+    echo $__nameLength
+
+    if [ "$__nameLength" -gt 12 ]
+    then
+        echo "Name $__nodePoolName Length is greater than 12...try again"
+    else 
+        echo "Name length is fine"
+    fi
+
+    az aks nodepool show -g $__RG --cluster-name $__clusterName -n $__nodePoolName -o json
 
     if [ $? -eq 0 ]
     then
-        echo "Node Pool name already Exists"
-        return 0
-    else 
-        echo "Node Pool name does not Exist"
+        echo "Node Pool name $__nodePoolName already Exists"
         return 1
+    else 
+        echo "Node Pool name $__nodePoolName does not Exist"
+        return 0
     fi
 }
 
