@@ -40,6 +40,8 @@ function upgradeNodePool() {
     local __newNodePoolName=$3-$UPDATE_TO_KUBERNETES_VERSION
 
     checkNodePoolNameExists $__RG $__clusterName $__oldNodePoolName
+
+    ## Continue Here
 }
 
 function checkNodePoolNameExists() {
