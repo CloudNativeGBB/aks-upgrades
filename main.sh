@@ -17,18 +17,20 @@ source ./010-azCLIOperations.sh
 ## Load Cluster Level Operation functions
 source ./020-clusterOperations
 
-# Check prerequisites
-helperCheckScriptRequirements
-helperClearTempFiles
+function main() {
+    # Check prerequisites
+    helperCheckScriptRequirements
+    helperClearTempFiles
 
-# Set Azure CLI to right Subscription
-setSubscription $AZURE_SUBSCRIPTION_ID
+    # Set Azure CLI to right Subscription
+    setSubscription $AZURE_SUBSCRIPTION_ID
 
-# Find Cluster Upgrade Candidates
-createClusterUpgradeCandidatesJSON
+    # Find Cluster Upgrade Candidates
+    createClusterUpgradeCandidatesJSON
 
-# Check if Control Plane Needs Upgrade First
-checkClusterControlPlanes
+    # Check if Control Plane Needs Upgrade First
+    checkClusterControlPlanes
 
-# Upgrade Elgible Cluster NodePools
-upgradeClusterNodePools
+    # Upgrade Elgible Cluster NodePools
+    upgradeClusterNodePools
+}
