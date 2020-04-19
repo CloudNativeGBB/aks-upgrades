@@ -20,7 +20,7 @@ function upgradeNodePool() {
 function createListOfNodesInNodePool() {
     local __nodePoolName=$1
 
-    kubectl get nodes | grep -i $__nodePoolName | awk '{print $1}' > .tmp/nodepool-$__nodePoolName.txt
+    kubectl get nodes | grep -w -i $__nodePoolName | awk '{print $1}' > .tmp/nodepool-$__nodePoolName.txt
     return 0
 }
 
