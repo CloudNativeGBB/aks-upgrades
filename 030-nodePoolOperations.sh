@@ -3,29 +3,6 @@
 ## Load node Level Operation functions
 source "./040-nodeOperations.sh"
 
-### Node Pool functions
-
-#### MARK FOR DEATH - REDUNDANT FUNCTION - createClusterUpgradeCandidatesJSON() does same thing
-# function createNodePoolUpgradeCandidatesJSON(){
-#     local __fileName="nodePoolUpgradeCandidates.json"
-
-#     echo "Generating list of AKS Node Pools to upgrade..."
-
-#         local $__json=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
-
-
-#     if [ $? -eq 0 ]
-#     then
-#         echo "Succeeded to create list of Node Pool upgrade candidates"
-#         echo $__json | tee .tmp/$__fileName
-#     else
-#         echo "Failed to create list of Node Pool upgrade candidates" > err.log 
-#         return 1
-#     fi
-# }
-####
-
-
 function upgradeNodePools() {
     local __RG=$1
     local __clusterName=$2
