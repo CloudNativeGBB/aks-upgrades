@@ -2,3 +2,4 @@
 1. create prompt to select version to upgrade to
 1. create wrapper function to allow targetting specific RGs
 1. transfer over existing agent pool taints/tollerations
+1. Find a better way to automatically add suffix to new nodepools
