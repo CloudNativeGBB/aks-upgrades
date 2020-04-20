@@ -4,14 +4,14 @@ function helperCheckScriptRequirements(){
     local __requirements=("az" "jq" "kubectl")
 
     for __req in ${__requirements[@]}; do
-        which $__req
+        local __results=$(which $__req)
 
         if [ $? -eq 0 ]
         then
             echo "SUCCESS Requirement: $__req found."
         else
             echo "FAILED Requirement: $__req not found.  Please install '$__req'." > err.log
-            retrun 0
+            return 1
         fi
     done
 }
