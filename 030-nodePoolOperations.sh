@@ -33,8 +33,6 @@ function checkNodePoolNameIsValid() {
     # local __nodePoolNameLength=$(expr length $__nodePoolName)
     local __nameLength=$(expr length $__nodePoolName)
     
-    echo $__nameLength
-
     if [ "$__nameLength" -gt 12 ]
     then
         echo "Name $__nodePoolName Length is greater than 12...try again"
@@ -57,7 +55,7 @@ function checkNodePoolNameIsValid() {
 function createListOfNodesInNodePool() {
     local __nodePoolName=$1
 
-    kubectl get nodes | grep -w -i $__nodePoolName | awk '{print $1}' > "$TEMP_FOLDERnodepool-$__nodePoolName.txt"
+    kubectl get nodes | grep -w -i $__nodePoolName | awk '{print $1}' > $TEMP_FOLDER"nodepool-"$__nodePoolName".txt"
     return 0
 }
 
@@ -83,8 +81,8 @@ function createNewNodePool() {
 # Taint Node Pool
 function taintNodePool() {
     local __nodePoolName=$1
-    local __nodesListFile="$TEMP_FOLDERnodepool-$__nodePoolName.txt"
-    local __taintListFile="$TEMP_FOLDERnodepool-$__nodePoolName-taint.txt"
+    local __nodesListFile=$TEMP_FOLDER"nodepool-"$__nodePoolName".txt"
+    local __taintListFile=$TEMP_FOLDER"nodepool-"$__nodePoolName"-taint.txt"
 
     # duplicate Node List to Taint List to track progress
     cp $__nodesListFile $__taintListFile
@@ -104,8 +102,8 @@ function taintNodePool() {
 
 function untaintNodePool() {
     local __nodePoolName=$1
-    local __nodesListFile="$TEMP_FOLDERnodepool-$__nodePoolName.txt"
-    local __untaintListFile="$TEMP_FOLDERnodepool-$__nodePoolName-untaint.txt"
+    local __nodesListFile=$TEMP_FOLDER"nodepool-"$__nodePoolName".txt"
+    local __untaintListFile=$TEMP_FOLDER"nodepool-"$__nodePoolName"-untaint.txt"
 
     # duplicate Node List to Taint List to track progress
     cp $__nodesListFile $__untaintListFile
@@ -125,8 +123,8 @@ function untaintNodePool() {
 
 function drainNodePool() {
     local __nodePoolName=$1
-    local __nodesListFile="$TEMP_FOLDERnodepool-$__nodePoolName.txt"
-    local __drainListFile="$TEMP_FOLDERnodepool-$__nodePoolName-drain.txt"
+    local __nodesListFile=$TEMP_FOLDER"nodepool-"$__nodePoolName".txt"
+    local __drainListFile=$TEMP_FOLDER"nodepool-"$__nodePoolName"-drain.txt"
     
     # duplicate Node List to Taint List to track progress
     cp $__nodesListFile $__drainListFile
@@ -151,10 +149,10 @@ function deleteNodePool() {
     local __nodePoolName=$3
 
     # Delete current NodePool
-    echo "Deleting current NodePool"
+    echo "Deleting NodePool $__nodePoolName"
     
     az aks nodepool delete \
-        -g $RG \
+        -g $__RG \
         --cluster-name $__clusterName \
         -n $__nodePoolName
 
@@ -163,6 +161,6 @@ function deleteNodePool() {
         echo "Success: Deleted Node Pool: $__nodePoolName"
         return 0
     else
-        echo "Failure: Unable to delete Node Pool: $__nodePoolName" > err.log
+        echo "Failure: Unable to delete Node Pool: $__nodePoolName" > $TEMP_FOLDER"err.log"
     fi
 }

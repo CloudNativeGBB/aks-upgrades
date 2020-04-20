@@ -11,8 +11,6 @@ export CLUSTER_FILE_NAME="clusterUpgradeCandidatesSummary.json"
 # Load/Import Scripts
 ## Load helper functions
 source ./000-helperFunctions.sh
-## Load Azure CLI pre-flight Operation functions
-source ./010-azCLIOperations.sh
 ## Load Cluster Level Operation functions
 source ./020-clusterOperations.sh
 
