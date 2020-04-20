@@ -23,6 +23,7 @@ function upgradeNodePool() {
     createListOfNodesInNodePool $__oldNodePoolName
     createNewNodePool $__RG $__clusterName $__newNodePoolName $__nodePoolCount $__nodePoolVMSize
     taintNodePool $__oldNodePoolName
+    drainNodePool $__oldNodePoolName
     deleteNodePool $__RG $__clusterName $__oldNodePoolName
 }
 
