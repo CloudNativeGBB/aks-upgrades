@@ -1,8 +1,5 @@
 #! /bin/bash
 
-## Load node Level Operation functions
-source "./040-nodeOperations.sh"
-
 function upgradeNodePoolsInCluster() {
     local __clusterName=$1
     local __RG=$(cat .tmp/$CLUSTER_FILE_NAME| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
@@ -25,6 +22,7 @@ function upgradeNodePool() {
     checkNodePoolNameisValid $__RG $__clusterName $__newNodePoolName
     createNewNodePool $__RG $__clusterName $__newNodePoolName $__nodePoolCount $__nodePoolVMSize
     taintNodePool $__oldNodePoolName
+    deleteNodePool $__RG $__clusterName $__newNodePoolName
 }
 
 function checkNodePoolNameIsValid() {
@@ -93,7 +91,11 @@ function taintNodePool() {
 
     for __nodeName in $(cat $__taintListFile)
     do
-        taintNode $__nodeName
+        echo "Tainting Node '$__nodeName' in Node Pool '$__nodePoolName'"        
+        kubectl taint node $__nodeName GettingUpgraded=:NoSchedule
+        # remove node name from list to track progress
+        sed -e s/$__nodeName//g -i $__taintListFile
+        echo "Done: Node '$__nodeName' in Node Pool '$__nodePoolName' Tainted."
     done
 
     echo "done - Tainting current Node Pool '$__nodePoolName'"
@@ -110,7 +112,11 @@ function untaintNodePool() {
 
     for __nodeName in $(cat $__untaintListFile)
     do
-        untaintNode $__nodePoolName
+        echo "Untainting Node '$__nodeName' in Node Pool '$__nodePoolName'"
+        kubectl taint node $__nodeName GettingUpgraded=:NoSchedule-
+        # remove node name from list to track progress
+        sed -e s/$__nodeName//g -i $__untaintListFile
+        echo "Done: Node '$__nodeName' in Node Pool '$__nodePoolName' Untainted."
     done
 
     echo "done - Untainting current Node Pool '$__nodePoolName'"
@@ -127,7 +133,12 @@ function drainNodePool() {
 
     for __nodeName in $(cat $__drainListFile)
     do
-        drainNode $__nodeName
+        echo "Draining Node '$__nodeName' in Node Pool '$__nodePoolName'"
+        kubectl drain $NODE --ignore-daemonsets --delete-local-data
+        sleep 60
+        # remove node name from list to track progress
+        sed -e s/$__nodeName//g -i $__drainListFile
+        echo "Done: Node '$__nodeName' in Node Pool '$__nodePoolName' Drained."
     done
 
     echo "done - Draining current Node Pool '$__nodePoolName'"
