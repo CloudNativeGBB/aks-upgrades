@@ -3,7 +3,7 @@
 ## Required Bootstrap VARIABLES
 export UPDATE_TO_KUBERNETES_VERSION="1.16.7"
 export TEMP_FOLDER=".tmp/"
-export CLUSTER_FILE_NAME="clusterUpgradeCandidatesSummary.json"
+export CLUSTERS_FILE_NAME="clusterUpgradeCandidatesSummary.json"
 export ERR_LOG_FILE_NAME="err.log"
 
 export K8S_CONTROL_PLANE_UPGRADE_ONLY=false

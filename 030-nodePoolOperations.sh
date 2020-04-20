@@ -2,9 +2,9 @@
 
 function upgradeNodePoolsInCluster() {
     local __clusterName=$1
-    local __RG=$(cat "$TEMP_FOLDER$CLUSTER_FILE_NAME"| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
+    local __RG=$(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME"| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
 
-    for __nodePoolName in $(cat "$TEMP_FOLDER$CLUSTER_FILE_NAME"| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).agentPoolProfiles[].name')
+    for __nodePoolName in $(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME"| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).agentPoolProfiles[].name')
     do
         upgradeNodePool $__RG $__clusterName $__nodePoolName
     done
@@ -16,8 +16,8 @@ function upgradeNodePool() {
     local __oldNodePoolName=$3
     local __suffix="v${UPDATE_TO_KUBERNETES_VERSION//./}"  
     local __newNodePoolName=$__oldNodePoolName$__suffix
-    local __nodePoolCount=$(cat "$TEMP_FOLDER$CLUSTER_FILE_NAME" | jq -r --arg clusterName "$__clusterName" --arg nodePoolName "$__oldNodePoolName" '.[] | select(.name==$clusterName).agentPoolProfiles[] | select(.name==$nodePoolName).count')
-    local __nodePoolVMSize=$(cat "$TEMP_FOLDER$CLUSTER_FILE_NAME" | jq -r --arg clusterName "$__clusterName" --arg nodePoolName "$__oldNodePoolName" '.[] | select(.name==$clusterName).agentPoolProfiles[] | select(.name==$nodePoolName).vmSize')
+    local __nodePoolCount=$(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME" | jq -r --arg clusterName "$__clusterName" --arg nodePoolName "$__oldNodePoolName" '.[] | select(.name==$clusterName).agentPoolProfiles[] | select(.name==$nodePoolName).count')
+    local __nodePoolVMSize=$(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME" | jq -r --arg clusterName "$__clusterName" --arg nodePoolName "$__oldNodePoolName" '.[] | select(.name==$clusterName).agentPoolProfiles[] | select(.name==$nodePoolName).vmSize')
 
     # checkNodePoolNameisValid $__RG $__clusterName $__newNodePoolName
     createListOfNodesInNodePool $__oldNodePoolName

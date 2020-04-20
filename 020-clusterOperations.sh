@@ -2,7 +2,7 @@
 
 # Expected variables to be exported by calling script(s):
 # $UPDATE_TO_KUBERNETES_VERSION
-# $CLUSTER_FILE_NAME
+# $CLUSTERS_FILE_NAME
 
 ## Load nodePool Level Operation functions
 source "./030-nodePoolOperations.sh"
@@ -10,15 +10,12 @@ source "./030-nodePoolOperations.sh"
 ### Cluster functions
 function createClusterUpgradeCandidatesJSON(){
     echo "Generating list of AKS CLusters to upgrade..."
-
-    local __candidatesFullDetails=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux' && mode == 'User']]" -o json)
+    local __candidatesSummaryDetails=$(az aks list --query "[].{name: name, kubernetesVersion: kubernetesVersion, resourceGroup: resourceGroup, agentPoolProfiles: agentPoolProfiles[?orchestratorVersion < '1.16.7' && osType == 'Linux' && mode == 'User'].{count:count, name: name, mode: mode, vmSize: vmSize, orchestratorVersion:orchestratorVersion }}" -o json)
 
     if [ $? -eq 0 ]
     then
         echo "Succeeded to create list of cluster upgrade candidates"
-        echo $__candidatesFullDetails > "$TEMP_FOLDER/clusterUpgradeCandidatesFullDetails.json"
-        local __candidatesSummaryDetails=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
-        echo $__candidatesSummaryDetails > "$TEMP_FOLDER/$CLUSTER_FILE_NAME"
+        echo $__candidatesSummaryDetails > "$TEMP_FOLDER/$CLUSTERS_FILE_NAME"
     else
         echo "Failed to create list of cluster upgrade candidates" >> $TEMP_FOLDER$ERR_LOG_FILE_NAME
         return 1
@@ -42,10 +39,10 @@ function checkClusterExists() {
 }
 
 function checkClusterControlPlanes() {
-    for __clusterName in $(cat "$TEMP_FOLDER/$CLUSTER_FILE_NAME" | jq -r '.[] | .name')    
+    for __clusterName in $(cat "$TEMP_FOLDER/$CLUSTERS_FILE_NAME" | jq -r '.[] | .name')    
     do
-        local __RG=$(cat "$TEMP_FOLDER/$CLUSTER_FILE_NAME" | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
-        local __clusterK8sVersion=$(cat "$TEMP_FOLDER/$CLUSTER_FILE_NAME" | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).kubernetesVersion')
+        local __RG=$(cat "$TEMP_FOLDER/$CLUSTERS_FILE_NAME" | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
+        local __clusterK8sVersion=$(cat "$TEMP_FOLDER/$CLUSTERS_FILE_NAME" | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).kubernetesVersion')
         local __targetK8sVersion=$UPDATE_TO_KUBERNETES_VERSION
         
         checkClusterControlPlane $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion
@@ -119,7 +116,7 @@ function upgradeClusterControlPlane() {
 }
 
 function upgradeAllClustersAndNodePools() {
-    for __clusterName in $(cat "$TEMP_FOLDER/$CLUSTER_FILE_NAME" | jq -r '.[] | .name')
+    for __clusterName in $(cat "$TEMP_FOLDER/$CLUSTERS_FILE_NAME" | jq -r '.[] | .name')
     do
         upgradeNodePoolsInCluster $__clusterName
     done
