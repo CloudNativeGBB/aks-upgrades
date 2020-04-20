@@ -68,7 +68,7 @@ function createNewNodePool() {
     local __nodePoolVMSize=$5
 
     # Create new NodePool for workloads to move too
-    echo "Creating new NodePool"
+    echo "Creating new NodePool: $__newNodePoolName"
     
     az aks nodepool add \
         -g $__RG --cluster-name $__clusterName \
@@ -76,7 +76,14 @@ function createNewNodePool() {
         -c $__nodePoolCount \
         -s $__nodePoolVMSize
 
-    echo "done - Creating new NodePool"
+    if [ $? -eq 0 ]
+    then
+        echo "Success: Created new NodePool: $__newNodePoolName"
+        return 0
+    else
+        echo "Failure: Did Not Create new NodePool: $__newNodePoolName"
+        return 1
+    fi
 }
 
 # Taint Node Pool
