@@ -19,7 +19,7 @@ function upgradeNodePool() {
     local __nodePoolCount=$(cat "$TEMP_FOLDER$CLUSTER_FILE_NAME" | jq -r --arg clusterName "$__clusterName" --arg nodePoolName "$__oldNodePoolName" '.[] | select(.name==$clusterName).agentPoolProfiles[] | select(.name==$nodePoolName).count')
     local __nodePoolVMSize=$(cat "$TEMP_FOLDER$CLUSTER_FILE_NAME" | jq -r --arg clusterName "$__clusterName" --arg nodePoolName "$__oldNodePoolName" '.[] | select(.name==$clusterName).agentPoolProfiles[] | select(.name==$nodePoolName).vmSize')
 
-    checkNodePoolNameisValid $__RG $__clusterName $__newNodePoolName
+    # checkNodePoolNameisValid $__RG $__clusterName $__newNodePoolName
     createListOfNodesInNodePool $__oldNodePoolName
     createNewNodePool $__RG $__clusterName $__newNodePoolName $__nodePoolCount $__nodePoolVMSize
     taintNodePool $__oldNodePoolName
