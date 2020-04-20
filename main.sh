@@ -16,6 +16,5 @@ function main() {
     helperCheckScriptRequirements
     helperClearTempFiles
     createClusterUpgradeCandidatesJSON
-    checkClusterControlPlanes
-    upgradeAllClustersAndNodePools
+    checkAndRollingUpgradeAllClustersAndNodePools
 }

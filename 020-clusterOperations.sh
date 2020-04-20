@@ -38,15 +38,30 @@ function checkClusterExists() {
     fi
 }
 
-function checkClusterControlPlanes() {
+function checkAndUpgradeAllClusterControlPlanes() {
+    checkAllClusterControlPlanes 0
+}
+
+function checkAllClusterControlPlanes() {
+    local __upgradeControlPlane="${1:-1}"
+
     for __clusterName in $(cat "$TEMP_FOLDER/$CLUSTERS_FILE_NAME" | jq -r '.[] | .name')    
     do
         local __RG=$(cat "$TEMP_FOLDER/$CLUSTERS_FILE_NAME" | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
         local __clusterK8sVersion=$(cat "$TEMP_FOLDER/$CLUSTERS_FILE_NAME" | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).kubernetesVersion')
         local __targetK8sVersion=$UPDATE_TO_KUBERNETES_VERSION
         
-        checkClusterControlPlane $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion
+        checkClusterControlPlane $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion $__upgradeControlPlane
     done
+}
+
+function checkAndUpgradeClusterControlPlane() {
+    local __RG=$1
+    local __clusterName=$2
+    local __clusterK8sVersion=$3
+    local __targetK8sVersion=$4
+
+    checkClusterControlPlane $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion 0
 }
 
 function checkClusterControlPlane() {
@@ -54,8 +69,9 @@ function checkClusterControlPlane() {
     local __clusterName=$2
     local __clusterK8sVersion=$3
     local __targetK8sVersion=$4
+    local __upgradeControlPlane="${5:-1}"
 
-    checkClusterControlPlaneNeedsUpgrade $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion
+    checkClusterControlPlaneNeedsUpgrade $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion $__upgradeControlPlane
 }
 
 function checkClusterControlPlaneNeedsUpgrade() {
@@ -63,12 +79,18 @@ function checkClusterControlPlaneNeedsUpgrade() {
     local __clusterName=$2
     local __clusterK8sVersion=$3
     local __targetK8sVersion=$4
+    local __upgradeControlPlane="${5:-1}"
 
     if [ $(helperCheckSemVer $__clusterK8sVersion) -lt $(helperCheckSemVer $__targetK8sVersion) ]
     then
         echo "Control Plane Upgrade needed for cluster $__clusterName."
         echo "Current Cluster version equal to: $__clusterK8sVersion"
         echo "Target Cluster version K8s $__targetK8sVersion"
+        
+        if [ "$__upgradeControlPlane" -eq 0 ]
+        then
+            upgradeClusterControlPlane $__RG $__clusterName $__targetK8sVersion
+        fi
     else 
         echo "Control Plane Upgrade not needed."
         echo "Control Plane version equal to: $__clusterK8sVersion."
@@ -83,7 +105,7 @@ function upgradeClusterControlPlane() {
     local __clusterName=$2
     local __K8SVersion=$3
 
-    echo "Upgrading Control Plane..."
+    echo "Upgrading Cluster $__clusterName Control Plane to K8s v.$__K8SVersion"
     echo "Started at: $(date)"
     
     az aks upgrade \
@@ -95,19 +117,28 @@ function upgradeClusterControlPlane() {
 
     if [ $? -eq 0 ]
     then
-        echo "Succeeded: Control Plane Upgrade Complete now at version $__K8SVersion"
+        echo "Succeeded: Upgraded Cluster $__clusterName Control Plane to K8s v.$__K8SVersion"
         echo "Finished at: $(date)"
         return 0
     else 
-        echo "Failed: Control Plane Upgrade to version $__K8SVersion"
+        echo "Failed: Control Plane Upgrade to v.$__K8SVersion"
         return 1
     fi
     
 }
 
-function upgradeAllClustersAndNodePools() {
+function checkAndRollingUpgradeAllClustersAndNodePools() {
     for __clusterName in $(cat "$TEMP_FOLDER/$CLUSTERS_FILE_NAME" | jq -r '.[] | .name')
     do
-        upgradeNodePoolsInCluster $__clusterName
+        local __RG=$(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME"| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
+        local __clusterK8sVersion=$(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME"| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).kubernetesVersion')
+        local __targetK8sVersion=$UPDATE_TO_KUBERNETES_VERSION
+        
+        checkAndUpgradeClusterControlPlane $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion
+
+        if [ $? -eq 0 ]
+        then
+            upgradeNodePoolsInCluster $__clusterName
+        fi
     done
 }
