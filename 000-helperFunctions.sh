@@ -8,9 +8,9 @@ function helperCheckScriptRequirements(){
 
         if [ $? -eq 0 ]
         then
-            echo "$(date)   SUCCESS Requirement: $__req found."
+            echo "SUCCESS Requirement: $__req found."
         else
-            echo "$(date)   FAILED Requirement: $__req not found.  Please install '$__req'." > err.log
+            echo "FAILED Requirement: $__req not found.  Please install '$__req'." > err.log
             retrun 0
         fi
     done
