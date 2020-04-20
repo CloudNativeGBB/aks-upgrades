@@ -20,7 +20,7 @@ function createClusterUpgradeCandidatesJSON(){
         local __candidatesSummaryDetails=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
         echo $__candidatesSummaryDetails > "$TEMP_FOLDER/$CLUSTER_FILE_NAME"
     else
-        echo "Failed to create list of cluster upgrade candidates" >> $TEMP_FOLDER"err.log"
+        echo "Failed to create list of cluster upgrade candidates" >> $TEMP_FOLDER$ERR_LOG_FILE_NAME
         return 1
     fi
 }
@@ -79,7 +79,7 @@ function checkClusterControlPlaneNeedsUpgrade() {
         then
             return 0
         else
-            echo "Control Plane Upgrade Failed." >> $TEMP_FOLDER"err.log"
+            echo "Control Plane Upgrade Failed." >> $TEMP_FOLDER$ERR_LOG_FILE_NAME
             return 1
         fi
     else 

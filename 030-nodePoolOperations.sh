@@ -161,6 +161,6 @@ function deleteNodePool() {
         echo "Success: Deleted Node Pool: $__nodePoolName"
         return 0
     else
-        echo "Failure: Unable to delete Node Pool: $__nodePoolName" > $TEMP_FOLDER"err.log"
+        echo "Failure: Unable to delete Node Pool: $__nodePoolName" > $TEMP_FOLDER$ERR_LOG_FILE_NAME
     fi
 }
