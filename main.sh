@@ -11,9 +11,9 @@ export IN_PLACE_NODE_UPDATE=false
 
 # Load/Import Scripts
 ## Load helper functions
-source 000-helperFunctions.sh
+source ./000-helperFunctions.sh
 ## Load Cluster Level Operation functions
-source 010-clusterOperations.sh
+source ./020-clusterOperations.sh
 
 function main() {
     # Check prerequisites
