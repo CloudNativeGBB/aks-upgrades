@@ -5,7 +5,8 @@ export AZURE_SUBSCRIPTION_ID=
 export UPDATE_TO_KUBERNETES_VERSION="1.16.7"
 export K8S_CONTROL_PLANE_UPGRADE_ONLY=false
 export IN_PLACE_NODE_UPDATE=false
-export CLUSTER_FILE_NAME="clusterUpgradeCandidates.json"
+export TEMP_FOLDER=".tmp/"
+export CLUSTER_FILE_NAME="clusterUpgradeCandidatesSummary.json"
 
 # Load/Import Scripts
 ## Load helper functions

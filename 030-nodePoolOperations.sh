@@ -2,9 +2,9 @@
 
 function upgradeNodePoolsInCluster() {
     local __clusterName=$1
-    local __RG=$(cat .tmp/$CLUSTER_FILE_NAME| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
+    local __RG=$(cat "$TEMP_FOLDER$CLUSTER_FILE_NAME"| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
 
-    for __nodePoolName in $(cat .tmp/$CLUSTER_FILE_NAME| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).agentPoolProfiles[].name')
+    for __nodePoolName in $(cat "$TEMP_FOLDER$CLUSTER_FILE_NAME"| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).agentPoolProfiles[].name')
     do
         upgradeNodePool $__RG $__clusterName $__nodePoolName
     done
@@ -16,8 +16,8 @@ function upgradeNodePool() {
     local __oldNodePoolName=$3
     local __suffix="v${UPDATE_TO_KUBERNETES_VERSION//./}"  
     local __newNodePoolName=$__oldNodePoolName$__suffix
-    local __nodePoolCount=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r --arg clusterName "$__clusterName" --arg nodePoolName "$__oldNodePoolName" '.[] | select(.name==$clusterName).agentPoolProfiles[] | select(.name==$nodePoolName).count')
-    local __nodePoolVMSize=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r --arg clusterName "$__clusterName" --arg nodePoolName "$__oldNodePoolName" '.[] | select(.name==$clusterName).agentPoolProfiles[] | select(.name==$nodePoolName).vmSize')
+    local __nodePoolCount=$(cat "$TEMP_FOLDER$CLUSTER_FILE_NAME" | jq -r --arg clusterName "$__clusterName" --arg nodePoolName "$__oldNodePoolName" '.[] | select(.name==$clusterName).agentPoolProfiles[] | select(.name==$nodePoolName).count')
+    local __nodePoolVMSize=$(cat "$TEMP_FOLDER$CLUSTER_FILE_NAME" | jq -r --arg clusterName "$__clusterName" --arg nodePoolName "$__oldNodePoolName" '.[] | select(.name==$clusterName).agentPoolProfiles[] | select(.name==$nodePoolName).vmSize')
 
     checkNodePoolNameisValid $__RG $__clusterName $__newNodePoolName
     createNewNodePool $__RG $__clusterName $__newNodePoolName $__nodePoolCount $__nodePoolVMSize
@@ -57,7 +57,7 @@ function checkNodePoolNameIsValid() {
 function createListOfNodesInNodePool() {
     local __nodePoolName=$1
 
-    kubectl get nodes | grep -w -i $__nodePoolName | awk '{print $1}' > .tmp/nodepool-$__nodePoolName.txt
+    kubectl get nodes | grep -w -i $__nodePoolName | awk '{print $1}' > "$TEMP_FOLDERnodepool-$__nodePoolName.txt"
     return 0
 }
 
@@ -83,8 +83,8 @@ function createNewNodePool() {
 # Taint Node Pool
 function taintNodePool() {
     local __nodePoolName=$1
-    local __nodesListFile=".tmp/nodepool-"$__nodePoolName".txt"
-    local __taintListFile=".tmp/nodepool-"$__nodePoolName"-taint.txt"
+    local __nodesListFile="$TEMP_FOLDERnodepool-$__nodePoolName.txt"
+    local __taintListFile="$TEMP_FOLDERnodepool-$__nodePoolName-taint.txt"
 
     # duplicate Node List to Taint List to track progress
     cp $__nodesListFile $__taintListFile
@@ -104,8 +104,8 @@ function taintNodePool() {
 
 function untaintNodePool() {
     local __nodePoolName=$1
-    local __nodesListFile=".tmp/nodepool-"$__nodePoolName".txt"
-    local __untaintListFile=".tmp/nodepool-"$__nodePoolName"-untaint.txt"
+    local __nodesListFile="$TEMP_FOLDERnodepool-$__nodePoolName.txt"
+    local __untaintListFile="$TEMP_FOLDERnodepool-$__nodePoolName-untaint.txt"
 
     # duplicate Node List to Taint List to track progress
     cp $__nodesListFile $__untaintListFile
@@ -125,8 +125,8 @@ function untaintNodePool() {
 
 function drainNodePool() {
     local __nodePoolName=$1
-    local __nodesListFile=".tmp/nodepool-$__nodePoolName.txt"
-    local __drainListFile=".tmp/nodepool-$__nodePoolName-drain.txt"
+    local __nodesListFile="$TEMP_FOLDERnodepool-$__nodePoolName.txt"
+    local __drainListFile="$TEMP_FOLDERnodepool-$__nodePoolName-drain.txt"
     
     # duplicate Node List to Taint List to track progress
     cp $__nodesListFile $__drainListFile

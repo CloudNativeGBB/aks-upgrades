@@ -11,12 +11,14 @@ source "./030-nodePoolOperations.sh"
 function createClusterUpgradeCandidatesJSON(){
     echo "Generating list of AKS CLusters to upgrade..."
 
-    local __json=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
+    local __candidatesFullDetails=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux']]" -o json)
 
     if [ $? -eq 0 ]
     then
         echo "Succeeded to create list of cluster upgrade candidates"
-        echo $__json | tee .tmp/$CLUSTER_FILE_NAME
+        echo $__candidatesFullDetails > "$TEMP_FOLDER/clusterUpgradeCandidatesFullDetails.json"
+        local __candidatesSummaryDetails=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
+        echo $__candidatesSummaryDetails > "$TEMP_FOLDER/$CLUSTER_FILE_NAME"
     else
         echo "Failed to create list of cluster upgrade candidates" > err.log 
         return 1
@@ -40,10 +42,10 @@ function checkClusterExists() {
 }
 
 function checkClusterControlPlanes() {
-    for __clusterName in $(cat .tmp/$CLUSTER_FILE_NAME | jq -r '.[] | .name')    
+    for __clusterName in $(cat "$TEMP_FOLDER/$CLUSTER_FILE_NAME" | jq -r '.[] | .name')    
     do
-        local __RG=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
-        local __clusterK8sVersion=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).kubernetesVersion')
+        local __RG=$(cat "$TEMP_FOLDER/$CLUSTER_FILE_NAME" | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
+        local __clusterK8sVersion=$(cat "$TEMP_FOLDER/$CLUSTER_FILE_NAME" | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).kubernetesVersion')
         local __targetK8sVersion=$UPDATE_TO_KUBERNETES_VERSION
         
         checkClusterControlPlane $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion
@@ -77,7 +79,7 @@ function checkClusterControlPlaneNeedsUpgrade() {
         then
             return 0
         else
-            echo "Control Plane Upgrade Failed." > .tmp/err.log
+            echo "Control Plane Upgrade Failed." > "$TEMP_FOLDER/err.log"
             return 1
         fi
     else 
@@ -117,7 +119,7 @@ function upgradeClusterControlPlane() {
 }
 
 function upgradeAllClustersAndNodePools() {
-    for __clusterName in $(cat .tmp/$CLUSTER_FILE_NAME | jq -r '.[] | .name')
+    for __clusterName in $(cat "$TEMP_FOLDER/$CLUSTER_FILE_NAME" | jq -r '.[] | .name')
     do
         upgradeNodePoolsInCluster $__clusterName
     done

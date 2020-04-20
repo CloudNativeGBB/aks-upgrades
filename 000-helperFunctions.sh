@@ -23,6 +23,6 @@ function helperCheckSemVer() {
 
 # Function clear previous files
 function helperClearTempFiles() {
-    rm -rf .tmp
-    mkdir -p .tmp
+    rm -rf $TEMP_FOLDER
+    mkdir -p $TEMP_FOLDER
 }
