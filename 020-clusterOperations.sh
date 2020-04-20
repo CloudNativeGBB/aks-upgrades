@@ -5,7 +5,7 @@
 # $CLUSTER_FILE_NAME
 
 ## Load nodePool Level Operation functions
-source "./030-nodePoolOperations.sh"
+source 030-nodePoolOperations.sh
 
 ### Cluster functions
 function createClusterUpgradeCandidatesJSON(){
