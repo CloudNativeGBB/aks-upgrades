@@ -116,14 +116,9 @@ function upgradeClusterControlPlane() {
     
 }
 
-function upgradeClusterNodePools() {
-    local __RG=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r '.[] | .resourceGroup')
-    local __clusterNames=$(cat .tmp/$CLUSTER_FILE_NAME | jq -r '.[] | .name')
-
-    for __clusterName in __clusterNames
+function upgradeAllClustersAndNodePools() {
+    for __clusterName in $(cat .tmp/$CLUSTER_FILE_NAME | jq -r '.[] | .name')
     do
-        local __oldNodePoolNames=$(cat .tmp/$CLUSTER_FILE_NAME| jq -r ".[$i].agentPoolProfiles[].name")
-
-        upgradeNodePools $__RG $__clusterName $__oldNodePoolNames
+        upgradeNodePoolsInCluster $__clusterName
     done
 }

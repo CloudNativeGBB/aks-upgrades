@@ -2,7 +2,7 @@
 
 ## Required Bootstrap VARIABLES
 export AZURE_SUBSCRIPTION_ID=
-export UPDATE_TO_KUBERNETES_VERSION="1.15.19"
+export UPDATE_TO_KUBERNETES_VERSION="1.16.7"
 export K8S_CONTROL_PLANE_UPGRADE_ONLY=false
 export IN_PLACE_NODE_UPDATE=false
 export CLUSTER_FILE_NAME="clusterUpgradeCandidates.json"
@@ -29,6 +29,6 @@ function main() {
     # Check if Control Plane Needs Upgrade First
     checkClusterControlPlanes
 
-    # Upgrade Elgible Cluster NodePools
-    upgradeClusterNodePools
+    # Upgrade All NodePools in Eligible Clusters
+    upgradeAllClustersAndNodePools
 }

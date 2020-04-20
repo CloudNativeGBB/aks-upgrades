@@ -3,6 +3,16 @@
 ## Load node Level Operation functions
 source "./040-nodeOperations.sh"
 
+function upgradeNodePoolsInCluster() {
+    local __clusterName=$1
+    local __RG=$(cat .tmp/$CLUSTER_FILE_NAME| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
+
+    for __nodePoolName in $(cat .tmp/$CLUSTER_FILE_NAME| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).agentPoolProfiles[].name')
+    do
+        upgradeNodePool $__RG $__clusterName $__nodePoolName
+    done
+}
+
 function upgradeNodePool() {
     local __RG=$1
     local __clusterName=$2
@@ -15,13 +25,6 @@ function upgradeNodePool() {
     checkNodePoolNameisValid $__RG $__clusterName $__newNodePoolName
     createNewNodePool $__RG $__clusterName $__newNodePoolName $__nodePoolCount $__nodePoolVMSize
     taintNodePool $__oldNodePoolName
-}
-
-function createListOfNodesInNodePool() {
-    local __nodePoolName=$1
-
-    kubectl get nodes | grep -w -i $__nodePoolName | awk '{print $1}' > .tmp/nodepool-$__nodePoolName.txt
-    return 0
 }
 
 function checkNodePoolNameIsValid() {
@@ -51,6 +54,13 @@ function checkNodePoolNameIsValid() {
         echo "Node Pool name $__nodePoolName does not Exist"
         return 0
     fi
+}
+
+function createListOfNodesInNodePool() {
+    local __nodePoolName=$1
+
+    kubectl get nodes | grep -w -i $__nodePoolName | awk '{print $1}' > .tmp/nodepool-$__nodePoolName.txt
+    return 0
 }
 
 function createNewNodePool() {
@@ -83,12 +93,7 @@ function taintNodePool() {
 
     for __nodeName in $(cat $__taintListFile)
     do
-        echo "Tainting Node '$__nodeName' in Node Pool '$__nodePoolName'"
-        
-        kubectl taint node $__nodeName GettingUpgraded=:NoSchedule
-        
-        # remove node name from list to track progress
-        sed -e s/$__nodeName//g -i $__taintListFile
+        taintNode $__nodeName
     done
 
     echo "done - Tainting current Node Pool '$__nodePoolName'"
@@ -105,12 +110,7 @@ function untaintNodePool() {
 
     for __nodeName in $(cat $__untaintListFile)
     do
-        echo "Untainting Node '$__nodeName' in Node Pool '$__nodePoolName'"
-        
-        kubectl taint node $__nodeName GettingUpgraded=:NoSchedule-
-        
-        # remove node name from list to track progress
-        sed -e s/$__nodeName//g -i $__untaintListFile
+        untaintNode $__nodePoolName
     done
 
     echo "done - Untainting current Node Pool '$__nodePoolName'"
@@ -127,13 +127,7 @@ function drainNodePool() {
 
     for __nodeName in $(cat $__drainListFile)
     do
-        echo "Draining Node '$__nodeName' in Node Pool '$__nodePoolName'"
-        
-        kubectl drain $NODE --ignore-daemonsets --delete-local-data
-        sleep 60
-        
-        # remove node name from list to track progress
-        sed -e s/$__nodeName//g -i $__drainListFile
+        drainNode $__nodeName
     done
 
     echo "done - Draining current Node Pool '$__nodePoolName'"
