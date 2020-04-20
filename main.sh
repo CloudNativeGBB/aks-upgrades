@@ -13,16 +13,9 @@ source ./000-helperFunctions.sh
 source ./020-clusterOperations.sh
 
 function main() {
-    # Check prerequisites
     helperCheckScriptRequirements
     helperClearTempFiles
-
-    # Find Cluster Upgrade Candidates
     createClusterUpgradeCandidatesJSON
-
-    # Check if Control Plane Needs Upgrade First
     checkClusterControlPlanes
-
-    # Upgrade All NodePools in Eligible Clusters
     upgradeAllClustersAndNodePools
 }
