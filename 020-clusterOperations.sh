@@ -11,7 +11,7 @@ source "./030-nodePoolOperations.sh"
 function createClusterUpgradeCandidatesJSON(){
     echo "Generating list of AKS CLusters to upgrade..."
 
-    local __candidatesFullDetails=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux']]" -o json)
+    local __candidatesFullDetails=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux' && mode == 'User']]" -o json)
 
     if [ $? -eq 0 ]
     then
@@ -20,7 +20,7 @@ function createClusterUpgradeCandidatesJSON(){
         local __candidatesSummaryDetails=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
         echo $__candidatesSummaryDetails > "$TEMP_FOLDER/$CLUSTER_FILE_NAME"
     else
-        echo "Failed to create list of cluster upgrade candidates" > err.log 
+        echo "Failed to create list of cluster upgrade candidates" >> $TEMP_FOLDER"err.log"
         return 1
     fi
 }
@@ -79,7 +79,7 @@ function checkClusterControlPlaneNeedsUpgrade() {
         then
             return 0
         else
-            echo "Control Plane Upgrade Failed." > "$TEMP_FOLDER/err.log"
+            echo "Control Plane Upgrade Failed." >> $TEMP_FOLDER"err.log"
             return 1
         fi
     else 
