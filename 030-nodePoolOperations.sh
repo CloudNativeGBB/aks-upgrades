@@ -74,7 +74,8 @@ function createNewNodePool() {
         -g $__RG --cluster-name $__clusterName \
         -n $__newNodePoolName \
         -c $__nodePoolCount \
-        -s $__nodePoolVMSize
+        -s $__nodePoolVMSize \
+        > $TEMP_FOLDER"newNodePool-"$__newNodePoolName".output"
 
     if [ $? -eq 0 ]
     then
