@@ -66,19 +66,9 @@ function checkClusterControlPlaneNeedsUpgrade() {
 
     if [ $(helperCheckSemVer $__clusterK8sVersion) -lt $(helperCheckSemVer $__targetK8sVersion) ]
     then
-        echo "Control Plane Upgrade needed."
-        echo "Control Plane version equal to: $__clusterK8sVersion"
-        echo "Target K8s $__targetK8sVersion"
-        
-        upgradeClusterControlPlane $__RG $__clusterName $__targetK8sVersion
-        
-        if [ $? -eq 0 ]
-        then
-            return 0
-        else
-            echo "Control Plane Upgrade Failed." >> $TEMP_FOLDER$ERR_LOG_FILE_NAME
-            return 1
-        fi
+        echo "Control Plane Upgrade needed for cluster $__clusterName."
+        echo "Current Cluster version equal to: $__clusterK8sVersion"
+        echo "Target Cluster version K8s $__targetK8sVersion"
     else 
         echo "Control Plane Upgrade not needed."
         echo "Control Plane version equal to: $__clusterK8sVersion."
