@@ -17,7 +17,8 @@ function createClusterUpgradeCandidatesJSON(){
     then
         echo "Succeeded to create list of cluster upgrade candidates"
         echo $__candidatesFullDetails > "$TEMP_FOLDER/clusterUpgradeCandidatesFullDetails.json"
-        local __candidatesSummaryDetails=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, orchestratorVersion: orchestratorVersion}}" -o json)
+        
+        local __candidatesSummaryDetails=$(az aks list --query "[?agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux']].{name: name, resourceGroup: resourceGroup, kubernetesVersion: kubernetesVersion, agentPoolProfiles: agentPoolProfiles[].{name: name, count: count, vmSize: vmSize, mode: mode, orchestratorVersion: orchestratorVersion}}" -o json)
         echo $__candidatesSummaryDetails > "$TEMP_FOLDER/$CLUSTER_FILE_NAME"
     else
         echo "Failed to create list of cluster upgrade candidates" >> $TEMP_FOLDER$ERR_LOG_FILE_NAME
