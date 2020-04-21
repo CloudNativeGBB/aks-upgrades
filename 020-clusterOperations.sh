@@ -135,7 +135,7 @@ function checkAndRollingUpgradeAllClustersAndNodePools() {
         local __targetK8sVersion=$UPDATE_TO_KUBERNETES_VERSION
 
         getClusterCredentials $__RG $__clusterName
-        setClusterConfigContext  
+        setClusterConfigContext $__clusterName
         checkAndUpgradeClusterControlPlane $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion
 
         if [ $? -eq 0 ]
