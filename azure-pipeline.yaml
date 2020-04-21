@@ -15,11 +15,14 @@ variables:
     value: "err.log"
 
 steps:
-- script: |
-    source main.sh
-  displayName: 'Load Main Script'
-  failOnStderr: true
-- script: |
-    main
-  displayName: 'Run Main Script'
-  failOnStderr: true
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'GBB Subscription(40545cc3-81f4-42c9-953d-67534438918e)'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      # Load Main/Bootstrap Script
+      source main.sh
+      
+      # Run main function
+      main
