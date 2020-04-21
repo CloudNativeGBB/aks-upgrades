@@ -133,7 +133,9 @@ function checkAndRollingUpgradeAllClustersAndNodePools() {
         local __RG=$(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME"| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
         local __clusterK8sVersion=$(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME"| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).kubernetesVersion')
         local __targetK8sVersion=$UPDATE_TO_KUBERNETES_VERSION
-        
+
+        getClusterCredentials $__RG $__clusterName
+        setClusterConfigContext  
         checkAndUpgradeClusterControlPlane $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion
 
         if [ $? -eq 0 ]
@@ -141,4 +143,17 @@ function checkAndRollingUpgradeAllClustersAndNodePools() {
             upgradeNodePoolsInCluster $__clusterName
         fi
     done
+}
+
+function getClusterCredentials() {
+    local __RG=$1
+    local __clusterName=$2
+
+    az aks get-credentials -g $__RG -n $__clusterName
+}
+
+function setClusterConfigContext() {
+    local __clusterName=$1
+
+    kubectl config set-context $__clusterName
 }
