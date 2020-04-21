@@ -10,7 +10,7 @@ source "./030-nodePoolOperations.sh"
 ### Cluster functions
 function createClusterUpgradeCandidatesJSON(){
     echo "Generating list of AKS CLusters to upgrade..."
-    local __candidatesSummaryDetails=$(az aks list --query "[].{name: name, kubernetesVersion: kubernetesVersion, resourceGroup: resourceGroup, agentPoolProfiles: agentPoolProfiles[?orchestratorVersion < '1.16.7' && osType == 'Linux' && mode == 'User'].{count:count, name: name, mode: mode, vmSize: vmSize, orchestratorVersion:orchestratorVersion }}" -o json)
+    local __candidatesSummaryDetails=$(az aks list --query "[].{name: name, kubernetesVersion: kubernetesVersion, resourceGroup: resourceGroup, agentPoolProfiles: agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux' && mode == 'User'].{count:count, name: name, mode: mode, vmSize: vmSize, orchestratorVersion:orchestratorVersion }}" -o json)
 
     if [ $? -eq 0 ]
     then

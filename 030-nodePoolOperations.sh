@@ -1,4 +1,7 @@
 #! /bin/bash
+# Expected variables to be exported by calling script(s):
+# $UPDATE_TO_KUBERNETES_VERSION
+# $CLUSTERS_FILE_NAME
 
 function upgradeNodePoolsInCluster() {
     local __clusterName=$1

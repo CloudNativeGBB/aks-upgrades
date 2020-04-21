@@ -1,10 +1,10 @@
 #! /bin/bash
 
 ## Required Bootstrap VARIABLES
-export UPDATE_TO_KUBERNETES_VERSION="1.17.3"
-export TEMP_FOLDER=".tmp/"
-export CLUSTERS_FILE_NAME="clusterUpgradeCandidatesSummary.json"
-export ERR_LOG_FILE_NAME="err.log"
+export UPDATE_TO_KUBERNETES_VERSION="${UPDATE_TO_KUBERNETES_VERSION:-1.17.3}"
+export TEMP_FOLDER="${TEMP_FOLDER:-.tmp/}"
+export CLUSTERS_FILE_NAME="${CLUSTERS_FILE_NAME:-clusterUpgradeCandidatesSummary.json}"
+export ERR_LOG_FILE_NAME="${ERR_LOG_FILE_NAME:-err.log}"
 
 # Load/Import Scripts
 ## Load helper functions
