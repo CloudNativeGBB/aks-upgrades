@@ -1,0 +1,25 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: "UPDATE_TO_KUBERNETES_VERSION"
+    value: "1.16.7"
+  - name: "TEMP_FOLDER"
+    value: ".tmp/"
+  - name: "CLUSTERS_FILE_NAME"
+  value: "clusterUpgradeCandidatesSummary.json"
+  - name: "ERR_LOG_FILE_NAME"
+    value: "err.log"
+
+steps:
+- script: |
+    source main.sh
+  displayName: 'Load Main Script'
+  failOnStderr: true
+- script: |
+    main
+  displayName: 'Run Main Script'
+  failOnStderr: true
