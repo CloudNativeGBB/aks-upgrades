@@ -8,7 +8,6 @@ export ERR_LOG_FILE_NAME="${ERR_LOG_FILE_NAME:-err.log}"
 
 ## Optional Variable - takes an array example: ("clusterRG_1:clusterName_1" "clusterRG_2:clusterName_2") 
 ## and will use array to filter/opt-out specific clusters from upgrade
-export EXCLUDED_CLUSTER_LIST="${EXCLUDED_CLUSTER_LIST:-}"
 
 # Load/Import Scripts
 ## Load helper functions

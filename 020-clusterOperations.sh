@@ -10,15 +10,19 @@ source "./030-nodePoolOperations.sh"
 ### Cluster functions
 function createClusterUpgradeCandidatesJSON(){
     echo "Generating list of AKS CLusters to upgrade..."
-    echo $az aks list \
-        --query "[].{name: name, kubernetesVersion: kubernetesVersion, resourceGroup: resourceGroup, agentPoolProfiles: agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux' && mode == 'User'].{count:count, name: name, mode: mode, vmSize: vmSize, orchestratorVersion:orchestratorVersion }}" \
-        -o json \
-        > "$TEMP_FOLDER$CLUSTERS_FILE_NAME"
+    local __candidatesSummaryDetails=$(az aks list --query "[].{name: name, kubernetesVersion: kubernetesVersion, resourceGroup: resourceGroup, agentPoolProfiles: agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux' && mode == 'User'].{count:count, name: name, mode: mode, vmSize: vmSize, orchestratorVersion:orchestratorVersion }}" -o json)
+    echo $__candidatesSummaryDetails > "$TEMP_FOLDER/$CLUSTERS_FILE_NAME"
 
     if [ $? -eq 0 ]
     then
         echo "Succeeded to create list of cluster upgrade candidates"
         removeClustersFromUpgradeCandidatesJSON
+        if [ $? -eq 0 ]
+        then
+            return 0
+        else 
+            return 1
+        fi
     else
         echo "Failed to create list of cluster upgrade candidates" >> $TEMP_FOLDER$ERR_LOG_FILE_NAME
         return 1
@@ -35,8 +39,10 @@ function removeClustersFromUpgradeCandidatesJSON() {
         return 0
     else
         echo "Removing clusters: $__excludedClusterArray"
+        echo "fails here"
         for __excludedCluster in "${__excludedClusterArray[@]}"
         do
+            echo "fails here2"
             local __arr=($(echo $__excludedCluster | tr ":" " "))
 
             # Using messey array syntax to make array indexes consistent between bash &
@@ -53,9 +59,10 @@ function removeClusterFromClusterUpgradeCandidatesJSON() {
     local __clusterName=$1
 
     cp "$TEMP_FOLDER$CLUSTERS_FILE_NAME" "$TEMP_FOLDER$CLUSTERS_FILE_NAME.original.backup"
+    echo "fails here3"
     cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME.original.backup" \
         | jq -r --arg RG "$__RG" --arg clusterName "$__clusterName" '[.[] | select((.name!=$RG) and (.resourceGroup!=$clusterName))]' \
-        > "$TEMP_FOLDER$CLUSTERS_FILE_NAME"
+        > "$TEMP_FOLDER$CLUSTERS_FILE_NAME.new"
 }
 
 function checkClusterExists() {
