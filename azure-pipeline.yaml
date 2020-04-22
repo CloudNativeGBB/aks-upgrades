@@ -10,7 +10,7 @@ variables:
   - name: "TEMP_FOLDER"
     value: ".tmp/"
   - name: "CLUSTERS_FILE_NAME"
-  value: "clusterUpgradeCandidatesSummary.json"
+    value: "clusterUpgradeCandidatesSummary.json"
   - name: "ERR_LOG_FILE_NAME"
     value: "err.log"
 
