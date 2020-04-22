@@ -156,7 +156,7 @@ function upgradeClusterControlPlane() {
         -n $__clusterName \
         -k $__K8SVersion \
         --control-plane-only \
-        -y
+        --yes
 
     if [ $? -eq 0 ]
     then
