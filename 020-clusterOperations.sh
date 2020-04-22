@@ -10,7 +10,7 @@ source "./030-nodePoolOperations.sh"
 ### Cluster functions
 function createClusterUpgradeCandidatesJSON(){
     echo "Generating list of AKS CLusters to upgrade..."
-    local __candidatesSummaryDetails=$(az aks list --query "[].{name: name, kubernetesVersion: kubernetesVersion, resourceGroup: resourceGroup, agentPoolProfiles: agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux' && mode == 'User'].{count:count, name: name, mode: mode, vmSize: vmSize, orchestratorVersion:orchestratorVersion }}" -o json)
+    local __candidatesSummaryDetails=$(az aks list --query "[].{name: name, id: id, kubernetesVersion: kubernetesVersion, resourceGroup: resourceGroup, agentPoolProfiles: agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux' && mode == 'User'].{count:count, name: name, mode: mode, vmSize: vmSize, orchestratorVersion:orchestratorVersion}}" -o json)
     echo $__candidatesSummaryDetails > "$TEMP_FOLDER/$CLUSTERS_FILE_NAME"
 
     if [ $? -eq 0 ]
@@ -158,12 +158,13 @@ function upgradeClusterControlPlane() {
     echo "Upgrading Cluster $__clusterName Control Plane to K8s v.$__K8SVersion"
     echo "Started at: $(date)"
     
-    az aks upgrade \
-        -g $__RG \
-        -n $__clusterName \
-        -k $__K8SVersion \
-        --control-plane-only \
-        --yes
+    ## Problem: Bug in CLI where -y/--yes flag is ignored and user input is still required.
+    # az aks upgrade -g $__RG -n $__clusterName -k $__K8SVersion --control-plane-only --yes
+
+    ## Work around for above Problem
+    local __resourceID=$(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME" | jq -r --arg RG "$__RG" --arg clusterName "$__clusterName" '.[] | select((.name==$clusterName) and (.resourceGroup==$RG)).id')
+    az resource update --ids $__resourceID --set "properties.kubernetesVersion=$__K8SVersion"
+
 
     if [ $? -eq 0 ]
     then
