@@ -46,7 +46,7 @@ function removeClustersFromUpgradeCandidatesJSON() {
             echo "fails here2"
             local __arr=($(echo $__excludedCluster | tr ":" " "))
 
-            # Using messey array syntax to make array indexes consistent between bash &
+            # Using messey array syntax to make array indexes consistent between bash & ZSH
             local __RG="${__arr[@]:0:1}"
             local __clusterName="${__arr[@]:1:1}"
 
