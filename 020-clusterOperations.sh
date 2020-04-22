@@ -31,7 +31,7 @@ function createClusterUpgradeCandidatesJSON(){
 }
 
 function removeClustersFromUpgradeCandidatesJSON() {
-    local __excludedClusterArray=(${EXCLUDED_CLUSTER_LIST:-$1})
+    local __excludedClusterArray=(${EXCLUDED_CLUSTERS_LIST:-$1})
     local __clustersFileJSON="$TEMP_FOLDER$CLUSTERS_FILE_NAME"
 
     if [ -z "$__excludedClusterArray" ]
@@ -191,6 +191,13 @@ function checkAndRollingUpgradeAllClustersAndNodePools() {
         if [ $? -eq 0 ]
         then
             upgradeNodePoolsInCluster $__clusterName
+            
+            if [ $? -eq 0 ]
+            then
+                echo "Successfully upgraded Cluster: $__clusterName"
+            else
+                echo "Failed to upgrade Cluster: $__clusterName"
+            fi
         fi
     done
 }

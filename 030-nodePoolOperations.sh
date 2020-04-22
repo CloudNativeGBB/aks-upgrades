@@ -24,10 +24,42 @@ function upgradeNodePool() {
 
     # checkNodePoolNameisValid $__RG $__clusterName $__newNodePoolName
     createListOfNodesInNodePool $__oldNodePoolName
+
     createNewNodePool $__RG $__clusterName $__newNodePoolName $__nodePoolCount $__nodePoolVMSize
-    taintNodePool $__oldNodePoolName
-    drainNodePool $__oldNodePoolName
-    deleteNodePool $__RG $__clusterName $__oldNodePoolName
+    
+    if [ $? -eq 0 ]
+    then
+        tainitAndDrainNodePool $__oldNodePoolName
+
+        if [ $? -eq 0 ]
+        then
+            deleteNodePool $__RG $__clusterName $__oldNodePoolName
+        else
+            return 0
+        fi
+    else
+        return 1
+    fi
+}
+
+function tainitAndDrainNodePool() {
+    local __nodePoolName=$1
+    
+    taintNodePool $__nodePoolName
+
+    if [ $? -eq 0 ]
+    then
+        drainNodePool $__nodePoolName
+        
+        if [ $? -eq 0 ]
+        then
+            return 0
+        else 
+            return 1
+        fi
+    else
+        return 1
+    fi
 }
 
 function checkNodePoolNameIsValid() {
@@ -78,8 +110,7 @@ function createNewNodePool() {
         -g $__RG --cluster-name $__clusterName \
         -n $__newNodePoolName \
         -c $__nodePoolCount \
-        -s $__nodePoolVMSize \
-        > $TEMP_FOLDER"newNodePool-"$__newNodePoolName".output"
+        -s $__nodePoolVMSize
 
     if [ $? -eq 0 ]
     then
@@ -145,15 +176,19 @@ function drainNodePool() {
     for __nodeName in $(cat $__drainListFile)
     do
         echo "Draining Node '$__nodeName' in Node Pool '$__nodePoolName'"
-        kubectl drain $NODE --ignore-daemonsets --delete-local-data
-        sleep 60
-        # remove node name from list to track progress
-        sed -e s/$__nodeName//g -i $__drainListFile
-        echo "Done: Node '$__nodeName' in Node Pool '$__nodePoolName' Drained."
+        kubectl drain $__nodeName --ignore-daemonsets --delete-local-data
+        if [ $? -eq 0 ]
+        then
+            sleep 60
+            # remove node name from list to track progress
+            sed -e s/$__nodeName//g -i $__drainListFile
+            echo "Done: Node '$__nodeName' in Node Pool '$__nodePoolName' Drained."
+            mv $__drainListFile "$__drainListFile".done
+        else
+            echo "Failure: Node '$__nodeName' in Node Pool '$__nodePoolName' **NOT** Drained."
+            return 1
+        fi
     done
-
-    echo "done - Draining current Node Pool '$__nodePoolName'"
-    mv $__drainListFile "$__drainListFile".done
 }
 
 function deleteNodePool() {
