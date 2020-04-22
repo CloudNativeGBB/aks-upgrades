@@ -17,6 +17,7 @@ function createClusterUpgradeCandidatesJSON(){
     then
         echo "Succeeded to create list of cluster upgrade candidates"
         removeClustersFromUpgradeCandidatesJSON
+        
         if [ $? -eq 0 ]
         then
             return 0
@@ -133,6 +134,12 @@ function checkClusterControlPlaneNeedsUpgrade() {
         if [ "$__upgradeControlPlane" -eq 0 ]
         then
             upgradeClusterControlPlane $__RG $__clusterName $__targetK8sVersion
+            if [ $? -eq 0]
+            then
+                return 0
+            else 
+                return 1
+            fi
         fi
     else 
         echo "Control Plane Upgrade not needed."
@@ -151,12 +158,12 @@ function upgradeClusterControlPlane() {
     echo "Upgrading Cluster $__clusterName Control Plane to K8s v.$__K8SVersion"
     echo "Started at: $(date)"
     
-    az aks upgrade \
+    echo $(az aks upgrade \
         -g $__RG \
         -n $__clusterName \
         -k $__K8SVersion \
         --control-plane-only \
-        --yes
+        --yes)
 
     if [ $? -eq 0 ]
     then
