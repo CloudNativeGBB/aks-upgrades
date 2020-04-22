@@ -158,12 +158,12 @@ function upgradeClusterControlPlane() {
     echo "Upgrading Cluster $__clusterName Control Plane to K8s v.$__K8SVersion"
     echo "Started at: $(date)"
     
-    echo $(az aks upgrade \
+    az aks upgrade \
         -g $__RG \
         -n $__clusterName \
         -k $__K8SVersion \
         --control-plane-only \
-        --yes)
+        --yes
 
     if [ $? -eq 0 ]
     then

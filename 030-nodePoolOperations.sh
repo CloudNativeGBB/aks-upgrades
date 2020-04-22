@@ -17,8 +17,9 @@ function upgradeNodePool() {
     local __RG=$1
     local __clusterName=$2
     local __oldNodePoolName=$3
-    local __suffix="v${UPDATE_TO_KUBERNETES_VERSION//./}"  
-    local __newNodePoolName=$__oldNodePoolName$__suffix
+    local __suffix="v${UPDATE_TO_KUBERNETES_VERSION//./}"
+    local __arr=($(echo $__oldNodePoolName | tr "v" " "))
+    local __newNodePoolName="${__arr[@]:0:1}$__suffix"
     local __nodePoolCount=$(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME" | jq -r --arg clusterName "$__clusterName" --arg nodePoolName "$__oldNodePoolName" '.[] | select(.name==$clusterName).agentPoolProfiles[] | select(.name==$nodePoolName).count')
     local __nodePoolVMSize=$(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME" | jq -r --arg clusterName "$__clusterName" --arg nodePoolName "$__oldNodePoolName" '.[] | select(.name==$clusterName).agentPoolProfiles[] | select(.name==$nodePoolName).vmSize')
 
@@ -177,18 +178,21 @@ function drainNodePool() {
     do
         echo "Draining Node '$__nodeName' in Node Pool '$__nodePoolName'"
         kubectl drain $__nodeName --ignore-daemonsets --delete-local-data
+        
         if [ $? -eq 0 ]
         then
             sleep 60
             # remove node name from list to track progress
             sed -e s/$__nodeName//g -i $__drainListFile
             echo "Done: Node '$__nodeName' in Node Pool '$__nodePoolName' Drained."
-            mv $__drainListFile "$__drainListFile".done
         else
             echo "Failure: Node '$__nodeName' in Node Pool '$__nodePoolName' **NOT** Drained."
             return 1
         fi
     done
+
+    echo "done - Draining current Node Pool '$__nodePoolName'"
+    mv $__drainListFile "$__drainListFile".done
 }
 
 function deleteNodePool() {
