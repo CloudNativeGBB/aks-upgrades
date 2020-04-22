@@ -13,6 +13,8 @@ variables:
     value: "clusterUpgradeCandidatesSummary.json"
   - name: "ERR_LOG_FILE_NAME"
     value: "err.log"
+  - name: "EXCLUDED_CLUSTERS_LIST"
+    value: "clusterRG-1:clusterName-1 clusterRG-2:clusterName-2 clusterRG-N:clusterName-N"
 
 steps:
 - task: AzureCLI@2
