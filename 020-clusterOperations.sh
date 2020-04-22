@@ -10,16 +10,52 @@ source "./030-nodePoolOperations.sh"
 ### Cluster functions
 function createClusterUpgradeCandidatesJSON(){
     echo "Generating list of AKS CLusters to upgrade..."
-    local __candidatesSummaryDetails=$(az aks list --query "[].{name: name, kubernetesVersion: kubernetesVersion, resourceGroup: resourceGroup, agentPoolProfiles: agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux' && mode == 'User'].{count:count, name: name, mode: mode, vmSize: vmSize, orchestratorVersion:orchestratorVersion }}" -o json)
+    echo $az aks list \
+        --query "[].{name: name, kubernetesVersion: kubernetesVersion, resourceGroup: resourceGroup, agentPoolProfiles: agentPoolProfiles[?orchestratorVersion < '$UPDATE_TO_KUBERNETES_VERSION' && osType == 'Linux' && mode == 'User'].{count:count, name: name, mode: mode, vmSize: vmSize, orchestratorVersion:orchestratorVersion }}" \
+        -o json \
+        > "$TEMP_FOLDER$CLUSTERS_FILE_NAME"
 
     if [ $? -eq 0 ]
     then
         echo "Succeeded to create list of cluster upgrade candidates"
-        echo $__candidatesSummaryDetails > "$TEMP_FOLDER/$CLUSTERS_FILE_NAME"
+        removeClustersFromUpgradeCandidatesJSON
     else
         echo "Failed to create list of cluster upgrade candidates" >> $TEMP_FOLDER$ERR_LOG_FILE_NAME
         return 1
     fi
+}
+
+function removeClustersFromUpgradeCandidatesJSON() {
+    local __excludedClusterArray=(${EXCLUDED_CLUSTER_LIST:-$1})
+    local __clustersFileJSON="$TEMP_FOLDER$CLUSTERS_FILE_NAME"
+
+    if [ -z "$__excludedClusterArray" ]
+    then
+        echo "No clusters remove from list of cluster upgrade candidates"
+        return 0
+    else
+        echo "Removing clusters: $__excludedClusterArray"
+        for __excludedCluster in "${__excludedClusterArray[@]}"
+        do
+            local __arr=($(echo $__excludedCluster | tr ":" " "))
+
+            # Using messey array syntax to make array indexes consistent between bash &
+            local __RG="${__arr[@]:0:1}"
+            local __clusterName="${__arr[@]:1:1}"
+
+            removeClusterFromClusterUpgradeCandidatesJSON $__RG $__clusterName
+        done
+    fi
+}
+
+function removeClusterFromClusterUpgradeCandidatesJSON() {
+    local __RG=$1
+    local __clusterName=$1
+
+    cp "$TEMP_FOLDER$CLUSTERS_FILE_NAME" "$TEMP_FOLDER$CLUSTERS_FILE_NAME.original.backup"
+    cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME.original.backup" \
+        | jq -r --arg RG "$__RG" --arg clusterName "$__clusterName" '[.[] | select((.name!=$RG) and (.resourceGroup!=$clusterName))]' \
+        > "$TEMP_FOLDER$CLUSTERS_FILE_NAME"
 }
 
 function checkClusterExists() {
@@ -45,10 +81,10 @@ function checkAndUpgradeAllClusterControlPlanes() {
 function checkAllClusterControlPlanes() {
     local __upgradeControlPlane="${1:-1}"
 
-    for __clusterName in $(cat "$TEMP_FOLDER/$CLUSTERS_FILE_NAME" | jq -r '.[] | .name')    
+    for __clusterName in $(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME" | jq -r '.[] | .name')    
     do
-        local __RG=$(cat "$TEMP_FOLDER/$CLUSTERS_FILE_NAME" | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
-        local __clusterK8sVersion=$(cat "$TEMP_FOLDER/$CLUSTERS_FILE_NAME" | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).kubernetesVersion')
+        local __RG=$(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME" | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
+        local __clusterK8sVersion=$(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME" | jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).kubernetesVersion')
         local __targetK8sVersion=$UPDATE_TO_KUBERNETES_VERSION
         
         checkClusterControlPlane $__RG $__clusterName $__clusterK8sVersion $__targetK8sVersion $__upgradeControlPlane
@@ -128,7 +164,7 @@ function upgradeClusterControlPlane() {
 }
 
 function checkAndRollingUpgradeAllClustersAndNodePools() {
-    for __clusterName in $(cat "$TEMP_FOLDER/$CLUSTERS_FILE_NAME" | jq -r '.[] | .name')
+    for __clusterName in $(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME" | jq -r '.[] | .name')
     do
         local __RG=$(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME"| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).resourceGroup')
         local __clusterK8sVersion=$(cat "$TEMP_FOLDER$CLUSTERS_FILE_NAME"| jq -r --arg clusterName "$__clusterName" '.[] | select(.name==$clusterName).kubernetesVersion')
@@ -149,7 +185,8 @@ function getClusterCredentials() {
     local __RG=$1
     local __clusterName=$2
 
-    az aks get-credentials -g $__RG -n $__clusterName
+    # Get Kube Config Creds and overwrite if already exists (No User Prompts)
+    az aks get-credentials -g $__RG -n $__clusterName --overwrite-existing
 }
 
 function setClusterConfigContext() {

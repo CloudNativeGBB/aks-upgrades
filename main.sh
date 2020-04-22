@@ -6,6 +6,10 @@ export TEMP_FOLDER="${TEMP_FOLDER:-.tmp/}"
 export CLUSTERS_FILE_NAME="${CLUSTERS_FILE_NAME:-clusterUpgradeCandidatesSummary.json}"
 export ERR_LOG_FILE_NAME="${ERR_LOG_FILE_NAME:-err.log}"
 
+## Optional Variable - takes an array example: ("clusterRG_1:clusterName_1" "clusterRG_2:clusterName_2") 
+## and will use array to filter/opt-out specific clusters from upgrade
+export EXCLUDED_CLUSTER_LIST="${EXCLUDED_CLUSTER_LIST:-}"
+
 # Load/Import Scripts
 ## Load helper functions
 source ./000-helperFunctions.sh
