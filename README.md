@@ -2,7 +2,20 @@
 
 **NOTE:** This is **NOT** meant for production and is **NOT** supported.
 
-This repository attempts to show how to do an in-place K8s version Cluster Control Plane and Node Pool upgrade.  
+This repository attempts to show how to do an in-place K8s version Cluster Control Plane and Node Pool upgrade.
+
+Upgrades are done in an inplace rolling update manner.
+1. Based on ```$UPDATE_TO_KUBERNETES_VERSION``` environment variable clusters with Node Pools older than the specified value will be added to an upgrades candidates file specified by ```$CLUSTERS_FILE_NAME``` in ```$TEMP_FOLDER``` directory
+1. If you explicitly add clusters to ```$EXCLUDED_CLUSTERS_LIST``` array, then these clusters will be skipped (removed from the list, after initial list generation)
+1. Clusters are then updated one-by-one accordingly
+    1. Control Plane API version is checked and upgraded as needed
+    1. Node Pools within the current cluster with versions older than specified version are "upgraded" (Blue/Green Node Pool Upgrade)
+        1. New Node Pool is created with same ```vmSize``` and node ```count``` values as Old (aka Current) Node Pool
+        1. New Node Pool is given a name of ```oldNodePoolName``` + suffix of ```vMMmmppp``` where ```v``` is the delimiter used for ```MMmmpppp``` which follows the targetted K8s semver of ```MM.mm.ppp```
+        1.  Once the new Node Pool is created, Old Node Pool is:
+            1. Tainted to stop any new workloads from being scheduled
+            2. Drained of existing workoads
+            3. Deleted
 
 ## Required Tools
 - Linux (preferred)/MacOS with bash or zsh
