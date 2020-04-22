@@ -134,7 +134,7 @@ function checkClusterControlPlaneNeedsUpgrade() {
         if [ "$__upgradeControlPlane" -eq 0 ]
         then
             upgradeClusterControlPlane $__RG $__clusterName $__targetK8sVersion
-            if [ $? -eq 0]
+            if [ $? -eq 0 ]
             then
                 return 0
             else 
